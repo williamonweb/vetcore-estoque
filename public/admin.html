@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VetCore Estoque</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>VetCore</h2>
+    <p class="muted">Estoque & Compras</p>
+    <div class="nav">
+      <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+      <button onclick="showPage('fornecedores',this)">Fornecedores</button>
+      <button onclick="showPage('usuarios',this)">Usuários</button>
+      <button onclick="showPage('categorias',this)">Categorias</button>
+      <button onclick="showPage('produtos',this)">Produtos</button>
+      <button onclick="showPage('movimentos',this)">Entrada/Saída</button>
+      <button onclick="showPage('cotacoes',this)">Cotações</button>
+      <button onclick="showPage('nfe',this)">XML NF-e</button>
+    </div>
+    <br>
+    <button class="secondary" onclick="logout()">Sair</button>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1 id="title">Dashboard</h1>
+        <p class="muted">Painel administrativo</p>
+      </div>
+    </div>
+
+    <section id="dashboard" class="sec">
+      <div class="grid" id="cards"></div>
+      <div class="card">
+        <h3>Produtos abaixo do mínimo</h3>
+        <table>
+          <thead><tr><th>Produto</th><th>Estoque</th><th>Mínimo</th><th>Comprar</th></tr></thead>
+          <tbody id="lowStock"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="fornecedores" class="sec hidden">
+      <div class="card">
+        <h3>Cadastrar fornecedor com login</h3>
+        <div class="grid">
+          <input id="supName" placeholder="Nome do fornecedor">
+          <input id="supPhone" placeholder="WhatsApp">
+          <input id="supEmail" placeholder="E-mail">
+          <input id="supUser" placeholder="Login de acesso">
+          <input id="supPass" placeholder="Senha de acesso">
+        </div>
+        <button onclick="saveSupplier()">Salvar fornecedor</button>
+      </div>
+      <div class="card">
+        <h3>Fornecedores</h3>
+        <table>
+          <thead><tr><th>Nome</th><th>Whats</th><th>E-mail</th><th>Acesso</th><th>Ações</th></tr></thead>
+          <tbody id="supTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="usuarios" class="sec hidden">
+      <div class="card">
+        <h3>Cadastrar usuário</h3>
+        <div class="grid">
+          <input id="userName" placeholder="Nome">
+          <input id="userLogin" placeholder="Login">
+          <input id="userPass" placeholder="Senha">
+          <select id="userRole"><option value="admin">Admin</option><option value="fornecedor">Fornecedor</option></select>
+          <select id="userSupplier"></select>
+        </div>
+        <button onclick="saveUser()">Salvar usuário</button>
+      </div>
+      <div class="card">
+        <h3>Usuários</h3>
+        <table>
+          <thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Fornecedor</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="categorias" class="sec hidden">
+      <div class="card">
+        <h3>Cadastrar categoria</h3>
+        <div class="grid"><input id="catName" placeholder="Nome da categoria"></div>
+        <button onclick="saveCategory()">Salvar categoria</button>
+      </div>
+      <div class="card">
+        <h3>Categorias</h3>
+        <table><thead><tr><th>Categoria</th><th>Ações</th></tr></thead><tbody id="catTable"></tbody></table>
+      </div>
+    </section>
+
+    <section id="produtos" class="sec hidden">
+      <div class="card">
+        <h3>Cadastrar produto</h3>
+        <div class="grid">
+          <input id="prodName" placeholder="Produto">
+          <select id="prodCat"></select>
+          <button class="secondary" onclick="openNewCategoryModal()">+ Nova categoria</button>
+          <select id="prodSupplier"></select>
+          <input id="prodStock" type="number" placeholder="Estoque inicial">
+          <input id="prodMin" type="number" placeholder="Estoque mínimo">
+          <input id="prodUnit" value="un" placeholder="Unidade">
+          <input id="prodEan" placeholder="EAN">
+        </div>
+        <button onclick="saveProduct()">Salvar produto</button>
+      </div>
+      <div class="card">
+        <h3>Produtos</h3>
+        <table>
+          <thead><tr><th>Produto</th><th>Categoria</th><th>Fornecedor padrão</th><th>Estoque</th><th>Mínimo</th><th>Ações</th></tr></thead>
+          <tbody id="prodTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="movimentos" class="sec hidden">
+      <div class="card">
+        <h3>Entrada / Saída</h3>
+        <div class="grid">
+          <select id="moveProduct"></select>
+          <button class="secondary" onclick="openProductSearch()">🔎 Localizar produto</button>
+          <select id="moveType"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+          <input id="moveQty" type="number" placeholder="Quantidade">
+          <input id="moveNote" placeholder="Observação">
+        </div>
+        <button onclick="saveMove()">Lançar</button>
+      </div>
+      <div class="card">
+        <h3>Registro de entradas e saídas</h3>
+        <table>
+          <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Observação</th></tr></thead>
+          <tbody id="stockMovesTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cotacoes" class="sec hidden">
+      <div class="card quote-sheet">
+        <div class="quote-head">
+          <div>
+            <h3>Planilha de Cotação</h3>
+            <p class="muted">Cotação online com fornecedores por login. Visual compacto estilo planilha.</p>
+          </div>
+          <button onclick="openNewQuoteModal()">+ Nova cotação</button>
+        </div>
+        <div id="quoteTabs" class="quote-tabs"></div>
+        <div class="table-wrap">
+          <table class="compact-table">
+            <thead><tr><th>Produto</th><th>Qtd</th><th>Fornecedor</th><th>Marca</th><th>Valor</th><th>Prazo</th><th>Pagamento</th><th>Observação</th><th>Melhor</th></tr></thead>
+            <tbody id="quoteSheetBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Mensagens agrupadas por fornecedor vencedor</h3>
+        <div class="table-wrap">
+          <table class="compact-table">
+            <thead><tr><th>Fornecedor</th><th>Itens ganhos</th><th>Total</th><th>Ações</th></tr></thead>
+            <tbody id="quoteWinnerGroups"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Status das cotações</h3>
+        <div id="quotesList"></div>
+      </div>
+    </section>
+
+    <section id="nfe" class="sec hidden">
+      <div class="card">
+        <h3>Importar XML da NF-e</h3>
+        <input type="file" id="xmlFile" accept=".xml">
+        <button onclick="importNfe()">Importar e dar entrada</button>
+        <p id="nfeMsg" class="muted"></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="mt"></h3>
+      <button class="x" onclick="closeModal()">×</button>
+    </div>
+    <div id="mb"></div>
+  </div>
+</div>
+
+<script src="/ui.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+
+
+/* v24 - alinhamento dos checkboxes no modal Nova Cotação */
+.checks label.check-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  margin:4px 0;
+  border-radius:12px;
+  cursor:pointer;
+}
+.checks label.check-row:hover{
+  background:rgba(255,255,255,.045);
+}
+.checks label.check-row input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  margin:0;
+  flex:0 0 auto;
+  accent-color:var(--accent);
+}
+.checks label.check-row span{
+  line-height:1.25;
+}
