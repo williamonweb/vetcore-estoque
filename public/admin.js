@@ -7,24 +7,24 @@ function supplierName(id){return state.suppliers.find(s=>s.id===id)?.name||'-'}
 function categoryName(idOrText){return state.categories?.find(c=>c.id===idOrText)?.name || idOrText || '-'}
 function renderAll(){
   const funcs = [
-    'renderDashboard',
-    'renderSuppliers',
-    'renderUsers',
-    'renderCategories',
-    'renderProducts',
-    'renderMoves',
-    'renderStockMoves',
-    'renderQuoteOptions',
-    'renderQuotes',
-    'renderQuoteSheet',
-    'renderResults'
+    renderDashboard,
+    renderSuppliers,
+    renderUsers,
+    renderCategories,
+    renderProducts,
+    renderMoves,
+    renderStockMoves,
+    renderQuoteOptions,
+    renderQuotes,
+    renderQuoteSheet,
+    renderResults
   ];
-  funcs.forEach(name => {
-    try {
-      if (typeof window[name] === 'function') window[name]();
-      else if (typeof eval(name) === 'function') eval(name)();
-    } catch(e) {
-      console.error('Erro ao renderizar '+name+':', e);
+
+  funcs.forEach(fn=>{
+    try{
+      if(typeof fn === 'function') fn();
+    }catch(e){
+      console.error('Erro ao renderizar:', e);
     }
   });
 }
@@ -86,9 +86,26 @@ function delCategory(id){
 }
 
 function renderProducts(){
-  prodSupplier.innerHTML='<option value="">Fornecedor padrão</option>'+state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  prodCat.innerHTML='<option value="">Selecione a categoria</option>'+(state.categories||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  prodTable.innerHTML=state.products.map(p=>`<tr><td>${p.name}</td><td>${categoryName(p.categoryId || p.category)}</td><td>${supplierName(p.supplierId)}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td><button class="danger" onclick="delProduct('${p.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">Nenhum produto.</td></tr>';
+  if(!document.getElementById('prodTable')) return;
+
+  if(document.getElementById('prodSupplier')){
+    prodSupplier.innerHTML='<option value="">Fornecedor padrão</option>'+(state.suppliers||[]).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }
+
+  if(document.getElementById('prodCat')){
+    prodCat.innerHTML='<option value="">Selecione a categoria</option>'+(state.categories||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  }
+
+  prodTable.innerHTML=(state.products||[]).map(p=>`
+    <tr>
+      <td>${p.name}</td>
+      <td>${categoryName(p.categoryId || p.category)}</td>
+      <td>${supplierName(p.supplierId)}</td>
+      <td>${p.stock} ${p.unit}</td>
+      <td>${p.minStock}</td>
+      <td><button class="danger" onclick="delProduct('${p.id}')">Excluir</button></td>
+    </tr>
+  `).join('')||'<tr><td colspan="6" class="muted">Nenhum produto.</td></tr>';
 }
 
 function openProductSearch(){
@@ -231,3 +248,38 @@ function renderQuoteOptions(){
   return;
 }
 
+
+async function saveProduct(){
+  try{
+    const body = {
+      name: document.getElementById('prodName').value.trim(),
+      categoryId: document.getElementById('prodCat').value,
+      supplierId: document.getElementById('prodSupplier').value,
+      stock: document.getElementById('prodStock').value || 0,
+      minStock: document.getElementById('prodMin').value || 0,
+      unit: document.getElementById('prodUnit').value || 'un',
+      ean: document.getElementById('prodEan').value || ''
+    };
+
+    if(!body.name){
+      openModal('Atenção','<p>Informe o nome do produto.</p>');
+      return;
+    }
+
+    await api('/api/products',{
+      method:'POST',
+      body:JSON.stringify(body)
+    });
+
+    ['prodName','prodStock','prodMin','prodEan'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+
+    document.getElementById('prodUnit').value = 'un';
+    toast('Produto salvo');
+    await load();
+  }catch(e){
+    openModal('Erro',`<p>${e.message}</p>`);
+  }
+}
