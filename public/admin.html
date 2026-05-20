@@ -9,6 +9,65 @@
 <section id="categorias" class="sec hidden"><div class="card"><h3>Cadastrar categoria</h3><input id="catName" placeholder="Nome da categoria"><button onclick="saveCategory()">Salvar categoria</button></div><div class="card"><h3>Categorias</h3><table><thead><tr><th>Categoria</th><th>Ações</th></tr></thead><tbody id="catTable"></tbody></table></div></section>
 <section id="produtos" class="sec hidden"><div class="card"><h3>Cadastrar produto</h3><div class="grid"><input id="prodName" placeholder="Produto"><select id="prodCat"></select><button class="secondary" onclick="openNewCategoryModal()">+ Nova categoria</button><select id="prodSupplier"></select><input id="prodStock" type="number" placeholder="Estoque inicial"><input id="prodMin" type="number" placeholder="Estoque mínimo"><input id="prodUnit" value="un" placeholder="Unidade"><input id="prodEan" placeholder="EAN"></div><button onclick="saveProduct()">Salvar produto</button></div><div class="card"><h3>Produtos</h3><table><thead><tr><th>Produto</th><th>Categoria</th><th>Fornecedor</th><th>Estoque</th><th>Mínimo</th><th>Ações</th></tr></thead><tbody id="prodTable"></tbody></table></div></section>
 <section id="movimentos" class="sec hidden"><div class="card"><h3>Entrada / Saída</h3><div class="grid"><select id="moveProduct"></select><button class="secondary" onclick="openProductSearch()">🔎 Localizar produto</button><select id="moveType"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><input id="moveQty" type="number" placeholder="Quantidade"><input id="moveNote" placeholder="Observação"></div><button onclick="saveMove()">Lançar</button></div><div class="card"><h3>Registro de entradas e saídas</h3><table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Observação</th></tr></thead><tbody id="stockMovesTable"></tbody></table></div></section>
-<section id="cotacoes" class="sec hidden"><div class="card quote-sheet"><div class="quote-head"><div><h3>Planilha de Cotação</h3><p class="muted">Cotação online com fornecedores por login. Visual compacto estilo planilha.</p></div><button onclick="openNewQuoteModal()">+ Nova cotação</button></div><div id="quoteTabs" class="quote-tabs"></div><div class="table-wrap"><table class="compact-table"><thead><tr><th>Produto</th><th>Qtd</th><th>Fornecedor</th><th>Marca</th><th>Valor</th><th>Prazo</th><th>Pagamento</th><th>Observação</th><th>Melhor</th></tr></thead><tbody id="quoteSheetBody"></tbody></table></div></div><div class="card"><h3>Mensagens agrupadas por fornecedor vencedor</h3><table><thead><tr><th>Fornecedor</th><th>Itens ganhos</th><th>Total</th><th>Ações</th></tr></thead><tbody id="quoteWinnerGroups"></tbody></table></div><div class="card"><h3>Status das cotações</h3><div id="quotesList"></div></div></section>
+<section id="cotacoes" class="sec hidden">
+  <div class="card quote-sheet">
+    <div class="quote-head">
+      <div>
+        <h3>Planilha de Cotação</h3>
+        <p class="muted">Cotação online com fornecedores por login. Visual compacto estilo planilha.</p>
+      </div>
+      <button onclick="openNewQuoteModal()">+ Nova cotação</button>
+    </div>
+
+    <div class="quote-actions">
+      <button onclick="openQuoteWhatsModal()">Mensagem WhatsApp</button>
+      <button onclick="printCurrentQuote()">PDF / Imprimir cotação</button>
+      <button onclick="exportCurrentQuoteCSV()">Exportar Excel/CSV</button>
+      <button onclick="downloadSupplierQuoteFile()">Gerar arquivo p/ fornecedor</button>
+      <button onclick="openImportResponseModal()">Importar resposta</button>
+    </div>
+
+    <div id="quoteTabs" class="quote-tabs"></div>
+
+    <div class="table-wrap">
+      <table class="compact-table">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Fornecedor</th>
+            <th>Marca</th>
+            <th>Valor</th>
+            <th>Prazo</th>
+            <th>Pagamento</th>
+            <th>Observação</th>
+            <th>Melhor</th>
+          </tr>
+        </thead>
+        <tbody id="quoteSheetBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Mensagens agrupadas por fornecedor vencedor</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Fornecedor</th>
+          <th>Itens ganhos</th>
+          <th>Total</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="quoteWinnerGroups"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Status das cotações</h3>
+    <div id="quotesList"></div>
+  </div>
+</section>
 <section id="nfe" class="sec hidden"><div class="card"><h3>Importar XML da NF-e</h3><input type="file" id="xmlFile" accept=".xml"><button onclick="importNfe()">Importar e dar entrada</button><p id="nfeMsg" class="muted"></p></div></section>
 </main></div><div id="modal" class="modal hidden"><div class="modal-box"><div class="modal-head"><h3 id="mt"></h3><button class="x" onclick="closeModal()">×</button></div><div id="mb"></div></div></div><script src="/ui.js"></script><script src="/admin.js"></script></body></html>

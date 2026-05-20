@@ -31,6 +31,197 @@ function openProductSearch(){openModal("Localizar produto",`<input id="modalProd
 function openNewQuoteModal(){const ps=state.products.map(p=>`<label class="check-row"><input type="checkbox" name="modalQProd" value="${p.id}"><span><b>${p.name}</b> <span class="muted">(${p.stock}/${p.minStock})</span></span></label>`).join("");const ss=state.suppliers.map(s=>`<label class="check-row"><input type="checkbox" name="modalQSup" value="${s.id}"><span>${s.name}</span></label>`).join("");openModal("Nova cotação",`<input id="modalQuoteTitle" placeholder="Título da cotação"><div class="grid"><div><h3>Produtos</h3><div class="checks">${ps}</div></div><div><h3>Fornecedores</h3><div class="checks">${ss}</div></div></div><button onclick="createQuoteFromModal()">Criar cotação</button>`)}
 async function createQuoteFromModal(){try{const productIds=[...document.querySelectorAll("[name=modalQProd]:checked")].map(x=>x.value);const supplierIds=[...document.querySelectorAll("[name=modalQSup]:checked")].map(x=>x.value);const r=await api("/api/quotes",{method:"POST",body:JSON.stringify({title:modalQuoteTitle.value,productIds,supplierIds})});activeQuoteId=r.quote.id;closeModal();toast("Cotação criada");await load()}catch(e){openModal("Erro",`<p>${e.message}</p>`)}}
 function showWhats(qid,sid){const q=state.quotes.find(x=>x.id===qid);const wins=compute(q).filter(w=>w.winner?.supplierId===sid);const msg=`Olá! Segue fechamento da cotação ${q.title}:\n\n`+wins.map(w=>`• ${w.item.name} — ${w.item.quantity} ${w.item.unit}\nMarca: ${w.winner.brand||"-"}\nValor unitário: R$ ${(+w.winner.unitPrice).toFixed(2)}\nPrazo: ${w.winner.deliveryTime||"-"}`).join("\n\n");openModal("Mensagem para "+supplierName(sid),`<textarea rows="13" id="wmsg">${msg}</textarea><button onclick="navigator.clipboard.writeText(wmsg.value);toast('Copiado')">Copiar</button>`)}
+
+function getCurrentQuoteOrWarn(){
+  const q = currentQuote();
+  if(!q){
+    openModal("Atenção","<p>Crie ou selecione uma cotação primeiro.</p>");
+    return null;
+  }
+  return q;
+}
+
+function openQuoteWhatsModal(){
+  const q = getCurrentQuoteOrWarn();
+  if(!q) return;
+
+  const suppliers = (q.suppliers||[]).map(s=>{
+    const sup = state.suppliers.find(x=>x.id===s.supplierId);
+    return sup ? {id:sup.id,name:sup.name,phone:sup.phone||""} : null;
+  }).filter(Boolean);
+
+  const options = suppliers.map(s=>`<option value="${s.id}">${s.name}${s.phone ? " - " + s.phone : ""}</option>`).join("");
+
+  openModal("Mensagem WhatsApp para cotação", `
+    <label>Fornecedor / destino</label>
+    <select id="quoteWhatsSupplier">${options}</select>
+    <textarea rows="10" id="quoteWhatsText">${buildQuoteRequestMessage(q, suppliers[0]?.id || "")}</textarea>
+    <button onclick="copyQuoteWhatsMessage()">Copiar mensagem</button>
+    <button class="secondary" onclick="openQuoteWhatsWeb()">Abrir WhatsApp Web</button>
+  `);
+
+  const select = document.getElementById("quoteWhatsSupplier");
+  select.onchange = () => {
+    document.getElementById("quoteWhatsText").value = buildQuoteRequestMessage(q, select.value);
+  };
+}
+
+function buildQuoteRequestMessage(q, supplierId){
+  const supplier = state.suppliers.find(s=>s.id===supplierId);
+  const itens = (q.items||[]).map(item=>`• ${item.name} — ${item.quantity} ${item.unit}`).join("\n");
+  return `Olá${supplier ? ", " + supplier.name : ""}! Tudo bem?\n\nPode nos passar cotação dos itens abaixo?\n\n${itens}\n\nFavor informar marca, valor unitário, prazo de entrega e condição de pagamento.\n\nObrigado!`;
+}
+
+function copyQuoteWhatsMessage(){
+  const txt = document.getElementById("quoteWhatsText").value;
+  navigator.clipboard.writeText(txt);
+  toast("Mensagem copiada");
+}
+
+function openQuoteWhatsWeb(){
+  const supplierId = document.getElementById("quoteWhatsSupplier").value;
+  const supplier = state.suppliers.find(s=>s.id===supplierId);
+  const txt = encodeURIComponent(document.getElementById("quoteWhatsText").value);
+  const phone = (supplier?.phone || "").replace(/\D/g,"");
+  const url = phone ? `https://wa.me/55${phone}?text=${txt}` : `https://web.whatsapp.com/send?text=${txt}`;
+  window.open(url, "_blank");
+}
+
+function printCurrentQuote(){
+  const q = getCurrentQuoteOrWarn();
+  if(!q) return;
+
+  const rows = [];
+  (q.items||[]).forEach(item=>{
+    (q.suppliers||[]).forEach((s,idx)=>{
+      const ans = (s.answers||[]).find(a=>a.productId===item.productId) || {};
+      rows.push(`<tr>
+        <td>${idx===0 ? item.name : ""}</td>
+        <td>${idx===0 ? item.quantity + " " + item.unit : ""}</td>
+        <td>${supplierName(s.supplierId)}</td>
+        <td>${ans.brand || "-"}</td>
+        <td>${ans.unitPrice ? "R$ " + Number(ans.unitPrice).toFixed(2) : "-"}</td>
+        <td>${ans.deliveryTime || "-"}</td>
+        <td>${ans.paymentCondition || "-"}</td>
+        <td>${ans.note || "-"}</td>
+      </tr>`);
+    });
+  });
+
+  const html = `
+    <html><head><title>${q.title}</title>
+    <style>body{font-family:Arial;padding:30px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px;text-align:left}h1{margin-bottom:5px}</style>
+    </head><body>
+    <h1>Planilha de Cotação</h1>
+    <p>${q.title}</p>
+    <table>
+      <thead><tr><th>Produto</th><th>Qtd</th><th>Fornecedor</th><th>Marca</th><th>Valor</th><th>Prazo</th><th>Pagamento</th><th>Observação</th></tr></thead>
+      <tbody>${rows.join("")}</tbody>
+    </table>
+    </body></html>
+  `;
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
+function exportCurrentQuoteCSV(){
+  const q = getCurrentQuoteOrWarn();
+  if(!q) return;
+
+  const lines = [["Produto","Quantidade","Unidade","Fornecedor","Marca","Valor","Prazo","Pagamento","Observação"]];
+  (q.items||[]).forEach(item=>{
+    (q.suppliers||[]).forEach(s=>{
+      const ans = (s.answers||[]).find(a=>a.productId===item.productId) || {};
+      lines.push([
+        item.name,
+        item.quantity,
+        item.unit,
+        supplierName(s.supplierId),
+        ans.brand || "",
+        ans.unitPrice || "",
+        ans.deliveryTime || "",
+        ans.paymentCondition || "",
+        ans.note || ""
+      ]);
+    });
+  });
+
+  const csv = lines.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(";")).join("\n");
+  downloadTextFile(`cotacao-${q.title || "arquivo"}.csv`, csv, "text/csv;charset=utf-8");
+}
+
+function downloadSupplierQuoteFile(){
+  const q = getCurrentQuoteOrWarn();
+  if(!q) return;
+
+  const payload = {
+    type:"vetcore-cotacao",
+    quote:{
+      id:q.id,
+      title:q.title,
+      createdAt:q.createdAt,
+      items:q.items,
+      suppliers:(q.suppliers||[]).map(s=>({supplierId:s.supplierId,name:supplierName(s.supplierId)}))
+    }
+  };
+
+  downloadTextFile(`cotacao-${q.title || q.id}.json`, JSON.stringify(payload,null,2), "application/json");
+  toast("Arquivo de cotação gerado");
+}
+
+function openImportResponseModal(){
+  openModal("Importar resposta do fornecedor", `
+    <p class="muted">Importe um arquivo JSON de resposta do fornecedor.</p>
+    <input type="file" id="supplierResponseFile" accept=".json">
+    <button onclick="importSupplierResponseFile()">Importar resposta</button>
+  `);
+}
+
+function importSupplierResponseFile(){
+  const file = document.getElementById("supplierResponseFile").files[0];
+  if(!file) return openModal("Atenção","<p>Selecione um arquivo JSON.</p>");
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try{
+      const data = JSON.parse(reader.result);
+      const qid = data.quoteId || data.quote?.id;
+      const supplierId = data.supplierId;
+      const answers = data.answers || [];
+
+      if(!qid || !supplierId || !answers.length){
+        throw new Error("Arquivo inválido. Precisa conter quoteId, supplierId e answers.");
+      }
+
+      await api(`/api/quotes/${qid}/respond`,{
+        method:"POST",
+        body:JSON.stringify({supplierId,answers})
+      });
+
+      closeModal();
+      toast("Resposta importada");
+      await load();
+    }catch(e){
+      openModal("Erro",`<p>${e.message}</p>`);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function downloadTextFile(filename, content, type="text/plain"){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.replace(/[\\/:*?"<>|]/g,"-");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function importNfe(){try{const fd=new FormData();fd.append("xml",xmlFile.files[0]);const r=await fetch("/api/import-nfe",{method:"POST",body:fd});const j=await r.json();if(!r.ok)throw new Error(j.error);nfeMsg.textContent=`Importados ${j.imported} itens.`;await load()}catch(e){openModal("Erro",`<p>${e.message}</p>`)}}
 function delSupplier(id){confirmModal("Excluir","Excluir fornecedor?",async()=>{await api("/api/suppliers/"+id,{method:"DELETE"});await load()})} function delUser(id){confirmModal("Excluir","Excluir usuário?",async()=>{await api("/api/users/"+id,{method:"DELETE"});await load()})} function delCategory(id){confirmModal("Excluir","Excluir categoria?",async()=>{await api("/api/categories/"+id,{method:"DELETE"});await load()})} function delProduct(id){confirmModal("Excluir","Excluir produto?",async()=>{await api("/api/products/"+id,{method:"DELETE"});await load()})} function delQuote(id){confirmModal("Excluir","Excluir cotação?",async()=>{await api("/api/quotes/"+id,{method:"DELETE"});await load()})}
 async function logout(){await fetch("/api/logout",{method:"POST"});location.href="/"}

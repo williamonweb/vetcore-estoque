@@ -49,3 +49,14 @@ th{font-size:12px;color:#9ecbff;text-transform:uppercase;letter-spacing:.45px}
 .winner-row td{background:rgba(37,207,192,.08)!important}
 .quote-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.main{padding:18px}}
+
+
+.quote-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:14px 0 16px;
+}
+.quote-actions button{
+  padding:11px 14px;
+}
