@@ -10,8 +10,11 @@ function renderSuppliers(){supTable.innerHTML=state.suppliers.map(s=>{let u=stat
 function renderUsers(){
   userSupplier.innerHTML='<option value="">Vincular fornecedor</option>'+state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   userTable.innerHTML=state.users.map(u=>{
-    const action = u.id === 'u_admin' ? '' : `<button class="danger" onclick="delUser('${u.id}')">Excluir</button>`;
-    return `<tr><td>${u.name}</td><td>${u.username}</td><td>${u.role}</td><td>${supplierName(u.supplierId)}</td><td>${action}</td></tr>`;
+    const status = u.active === false ? '<span class="pill bad">Bloqueado</span>' : '<span class="pill ok">Ativo</span>';
+    const actions = u.id === 'u_admin'
+      ? `<button class="secondary" onclick="openEditUser('${u.id}')">Editar</button>`
+      : `<button class="secondary" onclick="openEditUser('${u.id}')">Editar</button><button class="danger" onclick="delUser('${u.id}')">Excluir</button>`;
+    return `<tr><td>${u.name}</td><td>${u.username}</td><td>${u.role}</td><td>${supplierName(u.supplierId)}</td><td>${status}</td><td>${actions}</td></tr>`;
   }).join('');
 }
 function renderProducts(){prodSupplier.innerHTML='<option value="">Fornecedor padrão</option>'+state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');prodTable.innerHTML=state.products.map(p=>`<tr><td>${p.name}</td><td>${supplierName(p.supplierId)}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td><button class="danger" onclick="delProduct('${p.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">Nenhum produto.</td></tr>'}
@@ -33,5 +36,54 @@ function delSupplier(id){confirmModal('Excluir fornecedor','Deseja excluir este 
 function delUser(id){confirmModal('Excluir usuário','Deseja excluir este usuário?',async()=>{await api('/api/users/'+id,{method:'DELETE'});await load();toast('Excluído')})}
 function delProduct(id){confirmModal('Excluir produto','Deseja excluir este produto?',async()=>{await api('/api/products/'+id,{method:'DELETE'});await load();toast('Excluído')})}
 function delQuote(id){confirmModal('Excluir cotação','Deseja excluir esta cotação?',async()=>{await api('/api/quotes/'+id,{method:'DELETE'});await load();toast('Excluída')})}
+
+function openEditUser(id){
+  const u = state.users.find(x=>x.id===id);
+  if(!u) return openModal('Erro','<p>Usuário não encontrado.</p>');
+
+  const supplierOptions = '<option value="">Sem fornecedor</option>' + state.suppliers.map(s=>`<option value="${s.id}" ${u.supplierId===s.id?'selected':''}>${s.name}</option>`).join('');
+  const roleOptions = `<option value="admin" ${u.role==='admin'?'selected':''}>Admin</option><option value="fornecedor" ${u.role==='fornecedor'?'selected':''}>Fornecedor</option>`;
+  const activeChecked = u.active === false ? '' : 'checked';
+
+  openModal('Editar usuário', `
+    <div class="grid">
+      <div><label>Nome</label><input id="editUserName" value="${u.name || ''}"></div>
+      <div><label>Login</label><input id="editUserLogin" value="${u.username || ''}"></div>
+      <div><label>Nova senha</label><input id="editUserPass" placeholder="Deixe em branco para manter"></div>
+      <div><label>Perfil</label><select id="editUserRole">${roleOptions}</select></div>
+      <div><label>Fornecedor vinculado</label><select id="editUserSupplier">${supplierOptions}</select></div>
+      <div><label>Status</label><select id="editUserActive"><option value="true" ${u.active!==false?'selected':''}>Ativo</option><option value="false" ${u.active===false?'selected':''}>Bloqueado</option></select></div>
+    </div>
+    <button onclick="saveEditUser('${u.id}')">Salvar alterações</button>
+    <button class="secondary" onclick="resetUserPassword('${u.id}')">Resetar senha para 123456</button>
+  `);
+}
+
+async function saveEditUser(id){
+  try{
+    const body = {
+      name: editUserName.value,
+      username: editUserLogin.value,
+      password: editUserPass.value,
+      role: editUserRole.value,
+      supplierId: editUserSupplier.value,
+      active: editUserActive.value === 'true'
+    };
+    await api('/api/users/'+id,{method:'PUT',body:JSON.stringify(body)});
+    closeModal();
+    toast('Usuário atualizado');
+    await load();
+  }catch(e){openModal('Erro',`<p>${e.message}</p>`)}
+}
+
+async function resetUserPassword(id){
+  try{
+    await api('/api/users/'+id,{method:'PUT',body:JSON.stringify({password:'123456'})});
+    closeModal();
+    toast('Senha redefinida para 123456');
+    await load();
+  }catch(e){openModal('Erro',`<p>${e.message}</p>`)}
+}
+
 async function logout(){await fetch('/api/logout',{method:'POST'});location.href='/'}
 load().catch(e=>openModal('Erro',`<p>${e.message}</p>`));

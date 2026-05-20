@@ -1,0 +1,11 @@
+VetCore Estoque v15
+
+Alteração:
+- Tela Usuários agora permite editar usuário em modal.
+- Alterar nome, login, senha, perfil e fornecedor vinculado.
+- Bloquear/desbloquear usuário.
+- Resetar senha para 123456.
+- Mantida a lógica da v14 e layout premium.
+
+Login inicial:
+admin / 123456

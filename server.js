@@ -29,7 +29,7 @@ function readDB(){
   return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
 }
 function writeDB(db){ fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); }
-function safeUser(u){ return {id:u.id,name:u.name,username:u.username,role:u.role,supplierId:u.supplierId||null}; }
+function safeUser(u){ return {id:u.id,name:u.name,username:u.username,role:u.role,supplierId:u.supplierId||null,active:u.active!==false}; }
 function requireLogin(req,res,next){ if(!req.session.user) return res.status(401).json({error:"Sessão expirada. Entre novamente."}); next(); }
 function requireAdmin(req,res,next){ if(!req.session.user || req.session.user.role !== "admin") return res.status(403).json({error:"Acesso negado."}); next(); }
 
@@ -38,7 +38,7 @@ app.get("/", (req,res)=>res.sendFile(path.join(__dirname,"public","login.html"))
 app.post("/api/login", (req,res)=>{
   const db = readDB();
   const {username,password} = req.body;
-  const user = db.users.find(u=>u.username===username && u.password===password);
+  const user = db.users.find(u=>u.username===username && u.password===password && u.active !== false);
   if(!user) return res.status(401).json({error:"Usuário ou senha inválidos."});
   req.session.user = safeUser(user);
   res.json({ok:true,user:req.session.user});
@@ -67,6 +67,34 @@ app.post("/api/users", requireAdmin, (req,res)=>{
   if(role==="fornecedor" && !supplierId) return res.status(400).json({error:"Usuário fornecedor precisa estar vinculado a um fornecedor."});
   const user = {id:uid("usr"),name,username,password,role,supplierId:role==="fornecedor"?supplierId:null};
   db.users.push(user); writeDB(db); res.json({ok:true,user:safeUser(user)});
+});
+
+app.put("/api/users/:id", requireAdmin, (req,res)=>{
+  const db = readDB();
+  const user = db.users.find(u=>u.id===req.params.id);
+  if(!user) return res.status(404).json({error:"Usuário não encontrado."});
+
+  const {name,username,password,role,supplierId,active} = req.body;
+
+  if(username && username !== user.username && db.users.some(u=>u.username===username && u.id!==user.id)){
+    return res.status(400).json({error:"Esse login já existe."});
+  }
+
+  if(name !== undefined) user.name = name;
+  if(username !== undefined) user.username = username;
+  if(password !== undefined && password !== "") user.password = password;
+  if(role !== undefined) user.role = role;
+  if(active !== undefined) user.active = !!active;
+
+  if(user.role === "fornecedor"){
+    if(!supplierId) return res.status(400).json({error:"Usuário fornecedor precisa estar vinculado a um fornecedor."});
+    user.supplierId = supplierId;
+  } else {
+    user.supplierId = null;
+  }
+
+  writeDB(db);
+  res.json({ok:true,user:safeUser(user)});
 });
 app.delete("/api/users/:id", requireAdmin, (req,res)=>{
   const db = readDB();
