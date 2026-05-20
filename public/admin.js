@@ -5,7 +5,28 @@ async function load(){state=await api('/api/state');renderAll()}
 function showPage(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');title.textContent=btn.textContent}
 function supplierName(id){return state.suppliers.find(s=>s.id===id)?.name||'-'}
 function categoryName(idOrText){return state.categories?.find(c=>c.id===idOrText)?.name || idOrText || '-'}
-function renderAll(){renderDashboard();renderSuppliers();renderUsers();renderCategories();renderProducts();renderMoves();renderStockMoves();renderQuoteOptions();renderQuotes();renderQuoteSheet();renderResults()}
+function renderAll(){
+  const funcs = [
+    renderDashboard,
+    renderSuppliers,
+    renderUsers,
+    renderCategories,
+    renderProducts,
+    renderMoves,
+    renderStockMoves,
+    renderQuoteOptions,
+    renderQuotes,
+    renderQuoteSheet,
+    renderResults
+  ];
+  funcs.forEach(fn => {
+    try {
+      if (typeof fn === 'function') fn();
+    } catch(e) {
+      console.error('Erro ao renderizar:', e);
+    }
+  });
+}
 function renderDashboard(){cards.innerHTML=`<div class="card"><h2>${state.products.length}</h2><p>Produtos</p></div><div class="card"><h2>${state.suppliers.length}</h2><p>Fornecedores</p></div><div class="card"><h2>${state.quotes.length}</h2><p>Cotações</p></div>`;lowStock.innerHTML=state.products.filter(p=>Number(p.stock)<=Number(p.minStock)).map(p=>`<tr><td>${p.name}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td>${Math.max(0,p.minStock-p.stock)} ${p.unit}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Nenhum produto abaixo do mínimo.</td></tr>'}
 function renderSuppliers(){supTable.innerHTML=state.suppliers.map(s=>{let u=state.users.find(u=>u.supplierId===s.id);return `<tr><td>${s.name}</td><td>${s.phone||''}</td><td>${s.email||''}</td><td>${u?u.username:'<span class="warn">sem login</span>'}</td><td><button class="danger" onclick="delSupplier('${s.id}')">Excluir</button></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">Nenhum fornecedor.</td></tr>'}
 function renderUsers(){
@@ -119,6 +140,12 @@ function selectProductForMove(id){
   closeModal();
   toast(`Produto selecionado: ${p ? p.name : ''}`);
   moveQty?.focus();
+}
+
+
+function renderMoves(){
+  if(!document.getElementById('moveProduct')) return;
+  moveProduct.innerHTML = (state.products || []).map(p=>`<option value="${p.id}">${p.name} — estoque ${p.stock}</option>`).join('');
 }
 
 function renderStockMoves(){
