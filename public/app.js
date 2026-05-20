@@ -9,6 +9,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const chaveFornecedor=s=>String(s||'').trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 
 function init(){
+ document.querySelectorAll('.modal').forEach(m=>m.classList.remove('active'));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal.active').forEach(m=>m.classList.remove('active'));}});
+ document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active');}));
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.page,b));
  $('produtoForm').onsubmit=salvarProduto; $('movForm').onsubmit=registrarMov;
  if($('fornecedorForm')) $('fornecedorForm').onsubmit=salvarFornecedor;

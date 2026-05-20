@@ -1,7 +1,22 @@
-
-<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portal do Fornecedor</title><link rel="stylesheet" href="/style.css"></head>
-<body>
-<header><div><h2>Portal do Fornecedor</h2><span id="who" class="muted"></span></div><button class="secondary" onclick="logout()">Sair</button></header>
-<main><div class="card"><h3>Cotações disponíveis</h3><div id="quotes"></div></div></main>
-<script src="/fornecedor.js"></script>
-</body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VetCore - Responder Cotação</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb}.wrap{max-width:1100px;margin:auto;padding:26px}.card{background:#111827;border:1px solid #263244;border-radius:20px;padding:20px;margin-bottom:18px}h1{margin:0 0 6px}p{color:#94a3b8}button,.btn{border:0;border-radius:12px;padding:12px 15px;background:#14b8a6;color:#052e2b;font-weight:800;cursor:pointer;display:inline-block}input,textarea{width:100%;background:#020617;border:1px solid #334155;color:white;border-radius:10px;padding:10px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{border-bottom:1px solid #253244;padding:10px;text-align:left;vertical-align:top}th{color:#93c5fd;background:#0b1220}.tableWrap{overflow:auto;border:1px solid #253244;border-radius:14px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}label{font-size:13px;color:#cbd5e1}small{color:#94a3b8}.actions{display:flex;gap:10px;flex-wrap:wrap}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="card"><h1>VetCore - Responder Cotação</h1><p>Abra o arquivo de cotação recebido, preencha valores e gere o arquivo de resposta para enviar de volta.</p><div class="actions"><label class="btn">Abrir cotação<input id="file" type="file" accept=".json" hidden></label><button onclick="exportarResposta()">Gerar resposta</button></div></div>
+<div class="card" id="dados" style="display:none"><div class="grid"><label>Fornecedor<input id="fornecedor"></label><label>Prazo geral<input id="prazoGeral" placeholder="Ex: 2 dias úteis"></label><label>Pagamento<input id="pagamentoGeral" placeholder="Ex: PIX / boleto"></label></div><div class="tableWrap"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Marca</th><th>Valor unit.</th><th>Prazo</th><th>Entrega</th><th>Obs.</th></tr></thead><tbody id="tbody"></tbody></table></div></div>
+</div>
+<script>
+let cotacao=null;
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+$('file').onchange=e=>{let f=e.target.files[0]; if(!f)return; let r=new FileReader(); r.onload=()=>{try{cotacao=JSON.parse(r.result); if(cotacao.tipo!=='vetcore-cotacao-fornecedor')throw new Error(); $('dados').style.display='block'; $('fornecedor').value=cotacao.fornecedor||''; render();}catch{alert('Arquivo de cotação inválido.')}}; r.readAsText(f);};
+function render(){ $('tbody').innerHTML=(cotacao.itens||[]).map((i,idx)=>`<tr><td><b>${esc(i.produto)}</b><br><small>${esc(i.categoria||'')} ${i.ean?'EAN: '+esc(i.ean):''}<br>${esc(i.obs||'')}</small></td><td>${i.qtd} ${esc(i.unidade)}</td><td><input id="marca${idx}" placeholder="Marca ofertada"></td><td><input id="valor${idx}" type="number" step="0.01" placeholder="0,00"></td><td><input id="prazo${idx}" placeholder="${esc($('prazoGeral').value||'')}"></td><td><input id="entrega${idx}" placeholder="Entrega / retirada"></td><td><input id="obs${idx}" placeholder="Observação"></td></tr>`).join(''); }
+$('prazoGeral').oninput=render;
+function exportarResposta(){ if(!cotacao)return alert('Abra uma cotação primeiro.'); let fornecedor=$('fornecedor').value.trim(); if(!fornecedor)return alert('Informe o nome do fornecedor.'); let resp={tipo:'vetcore-resposta-cotacao',versao:1,fornecedor,data:new Date().toISOString(),pagamento:$('pagamentoGeral').value.trim(),itens:(cotacao.itens||[]).map((i,idx)=>({produtoId:i.produtoId,produto:i.produto,qtd:i.qtd,unidade:i.unidade,valor:+($('valor'+idx).value||0),marca:$('marca'+idx).value.trim(),prazo:$('prazo'+idx).value.trim()||$('prazoGeral').value.trim(),entrega:$('entrega'+idx).value.trim(),pagamento:$('pagamentoGeral').value.trim(),obs:$('obs'+idx).value.trim()}))}; let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(resp,null,2)],{type:'application/json'})); a.download='resposta-cotacao-'+fornecedor.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.json'; a.click(); }
+</script></body></html>
