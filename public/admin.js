@@ -7,23 +7,24 @@ function supplierName(id){return state.suppliers.find(s=>s.id===id)?.name||'-'}
 function categoryName(idOrText){return state.categories?.find(c=>c.id===idOrText)?.name || idOrText || '-'}
 function renderAll(){
   const funcs = [
-    renderDashboard,
-    renderSuppliers,
-    renderUsers,
-    renderCategories,
-    renderProducts,
-    renderMoves,
-    renderStockMoves,
-    renderQuoteOptions,
-    renderQuotes,
-    renderQuoteSheet,
-    renderResults
+    'renderDashboard',
+    'renderSuppliers',
+    'renderUsers',
+    'renderCategories',
+    'renderProducts',
+    'renderMoves',
+    'renderStockMoves',
+    'renderQuoteOptions',
+    'renderQuotes',
+    'renderQuoteSheet',
+    'renderResults'
   ];
-  funcs.forEach(fn => {
+  funcs.forEach(name => {
     try {
-      if (typeof fn === 'function') fn();
+      if (typeof window[name] === 'function') window[name]();
+      else if (typeof eval(name) === 'function') eval(name)();
     } catch(e) {
-      console.error('Erro ao renderizar:', e);
+      console.error('Erro ao renderizar '+name+':', e);
     }
   });
 }
@@ -223,3 +224,10 @@ async function resetUserPassword(id){
 
 async function logout(){await fetch('/api/logout',{method:'POST'});location.href='/'}
 load().catch(e=>openModal('Erro',`<p>${e.message}</p>`));
+
+
+function renderQuoteOptions(){
+  // Mantido como compatibilidade: a v19+ usa openNewQuoteModal/renderQuoteSheet.
+  return;
+}
+
