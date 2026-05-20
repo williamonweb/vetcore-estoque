@@ -1,7 +1,0 @@
-VetCore Estoque v22
-
-Correção:
-- Corrigido botão Salvar Produto.
-- Cadastro de produto agora envia categoryId corretamente.
-- Renderização de produtos e categorias reforçada.
-- Mantida cotação estilo v9 e layout premium.

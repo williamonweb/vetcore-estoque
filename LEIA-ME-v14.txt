@@ -1,9 +1,0 @@
-VetCore Estoque v14
-
-Alteração:
-- Layout premium dark.
-- Sidebar, cards, tabelas, botões e modais melhorados.
-- Mantida a lógica da v13.
-
-Login inicial:
-admin / 123456

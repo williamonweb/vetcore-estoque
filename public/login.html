@@ -1,23 +1,38 @@
 
-<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VetCore Estoque</title><link rel="stylesheet" href="/style.css"></head>
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VetCore Estoque</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
 <body class="login-body">
-<div class="login-card">
-  <div class="brand"><div class="logo">VC</div><div><h1>VetCore Estoque</h1><p class="muted">Acesso ao sistema</p></div></div>
-  <input id="username" placeholder="Usuário">
-  <input id="password" type="password" placeholder="Senha">
-  <button style="width:100%" onclick="login()">Entrar</button>
-  <p id="msg" class="bad"></p>
-</div>
-<div id="modal" class="modal hidden"><div class="modal-box"><div class="modal-head"><h3 id="mt"></h3><button class="x" onclick="closeModal()">×</button></div><div id="mb"></div></div></div>
-<script src="/ui.js"></script>
-<script>
-async function login(){
-  msg.textContent='';
-  try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value.trim(),password:password.value})});
-    const j=await r.json();
-    if(!r.ok) throw new Error(j.error||'Erro');
-    location.href = j.user.role === 'fornecedor' ? '/fornecedor.html' : '/admin.html';
-  }catch(e){ msg.textContent=e.message; }
-}
-</script></body></html>
+  <div class="login-card">
+    <div class="brand">
+      <div class="logo">VC</div>
+      <div>
+        <h1>VetCore Estoque</h1>
+        <p class="muted">Acesso ao sistema</p>
+      </div>
+    </div>
+    <input id="username" placeholder="Usuário">
+    <input id="password" type="password" placeholder="Senha">
+    <button style="width:100%" onclick="login()">Entrar</button>
+    <p id="msg" class="bad"></p>
+  </div>
+  <div id="modal" class="modal hidden"><div class="modal-box"><div class="modal-head"><h3 id="mt"></h3><button class="x" onclick="closeModal()">×</button></div><div id="mb"></div></div></div>
+  <script src="/ui.js"></script>
+  <script>
+    async function login(){
+      msg.textContent='';
+      try{
+        const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value.trim(),password:password.value})});
+        const j=await r.json();
+        if(!r.ok) throw new Error(j.error||'Erro');
+        location.href=j.user.role==='fornecedor'?'/fornecedor.html':'/admin.html';
+      }catch(e){msg.textContent=e.message}
+    }
+  </script>
+</body>
+</html>

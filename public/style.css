@@ -1,25 +1,51 @@
 
-
-/* v24 - alinhamento dos checkboxes no modal Nova Cotação */
-.checks label.check-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:10px 12px;
-  margin:4px 0;
-  border-radius:12px;
-  cursor:pointer;
+:root{
+  --bg:#070b12;--side:#09111e;--card:#111b2c;--card2:#17263e;--line:#27364f;
+  --text:#f7fbff;--muted:#91a8c7;--accent:#25cfc0;--danger:#ff6178;--ok:#28d99a;--warn:#f6c453;
+  --shadow:0 20px 55px rgba(0,0,0,.35);--radius:20px;
 }
-.checks label.check-row:hover{
-  background:rgba(255,255,255,.045);
-}
-.checks label.check-row input[type="checkbox"]{
-  width:18px;
-  height:18px;
-  margin:0;
-  flex:0 0 auto;
-  accent-color:var(--accent);
-}
-.checks label.check-row span{
-  line-height:1.25;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#070b12,#0d1524);color:var(--text);min-height:100vh}
+button,input,select,textarea{font-family:inherit}
+input,select,textarea{width:100%;background:#071120;color:var(--text);border:1px solid var(--line);border-radius:14px;padding:12px;margin:5px 0 12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,207,192,.14)}
+button{border:0;border-radius:14px;background:linear-gradient(135deg,var(--accent),#5eead4);color:#031015;font-weight:900;padding:12px 16px;cursor:pointer;margin:4px}
+button.secondary{background:#17263e;color:#fff;border:1px solid var(--line)}
+button.danger{background:var(--danger);color:#fff}
+.muted{color:var(--muted)}.bad{color:var(--danger)}.ok{color:var(--ok)}.warn{color:var(--warn)}.hidden{display:none!important}
+.login-body{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login-card{width:100%;max-width:440px;background:rgba(17,27,44,.96);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:28px;padding:32px}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.logo{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,var(--accent),#d4af5f);color:#061015;font-weight:1000;display:grid;place-items:center}
+.brand h1{font-size:30px;margin:0}.brand p{margin:4px 0 0}
+.layout{display:grid;grid-template-columns:286px 1fr;min-height:100vh}
+.sidebar{background:rgba(7,13,23,.98);border-right:1px solid var(--line);padding:26px 22px;position:sticky;top:0;height:100vh}
+.sidebar h2{margin:0;font-size:28px}.nav{margin-top:22px}
+.nav button{display:block;width:100%;text-align:left;background:transparent;color:#b6c8e3;border:1px solid transparent;margin:7px 0;box-shadow:none}
+.nav button.active,.nav button:hover{background:#17263e;color:#fff;border-color:var(--line)}
+.main{padding:30px;max-width:1540px;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.top h1{font-size:36px;margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:linear-gradient(180deg,rgba(18,28,46,.97),rgba(13,23,40,.97));border:1px solid rgba(255,255,255,.075);box-shadow:var(--shadow);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th,td{border-bottom:1px solid var(--line);padding:12px;text-align:left;vertical-align:top}
+th{font-size:12px;color:#9ecbff;text-transform:uppercase;letter-spacing:.45px}
+.pill{display:inline-block;background:#192a44;border:1px solid #314a70;border-radius:999px;padding:6px 10px;font-size:12px;color:#cfe0f7}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:99;backdrop-filter:blur(4px)}
+.modal-box{width:min(980px,100%);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#111c2e,#0e1727);border:1px solid #314a70;border-radius:26px;padding:24px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h3{margin:0;font-size:24px}
+.x{background:#1b2b44;color:#fff;border:1px solid var(--line);min-width:44px}
+.toast{position:fixed;right:22px;bottom:22px;background:#13233a;border:1px solid #314a70;padding:15px 18px;border-radius:16px;box-shadow:var(--shadow);z-index:120}
+.checks{max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:16px;padding:10px;background:#08111f}
+.checks label.check-row{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:4px 0;border-radius:12px;cursor:pointer}
+.checks label.check-row:hover{background:rgba(255,255,255,.045)}
+.checks label.check-row input[type="checkbox"]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--accent)}
+.table-wrap{width:100%;overflow:auto;border-radius:16px}
+.quote-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.quote-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.quote-tabs button{background:#17263e;color:#eaf3ff;border:1px solid #314a70;box-shadow:none;padding:9px 12px}
+.quote-tabs button.active{background:linear-gradient(135deg,var(--accent),#5eead4);color:#031015}
+.compact-table th,.compact-table td{padding:9px 10px;font-size:14px}
+.winner-row td{background:rgba(37,207,192,.08)!important}
+.quote-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{height:auto;position:relative}.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.main{padding:18px}}

@@ -1,9 +1,0 @@
-VetCore Estoque v13
-
-Correção:
-- Menu lateral do painel admin voltando a funcionar.
-- Corrigido erro de JavaScript que travava os botões.
-- Mantida a versão online com login, fornecedores, usuários, cotações e modais.
-
-Login inicial:
-admin / 123456

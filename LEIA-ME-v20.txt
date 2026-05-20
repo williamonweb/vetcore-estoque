@@ -1,6 +1,0 @@
-VetCore Estoque v20
-
-Correção:
-- Corrigido erro renderMoves is not defined.
-- Mantido layout e cotação estilo v9 da v19.
-- Renderização do painel admin ficou mais segura para evitar travamento total da tela.

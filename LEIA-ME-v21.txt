@@ -1,7 +1,0 @@
-VetCore Estoque v21
-
-Correção:
-- Corrigido erro renderQuoteOptions is not defined.
-- Mantida cotação estilo v9.
-- Mantido layout premium.
-- Mantidas funções online, login fornecedor, usuários, categorias e estoque.

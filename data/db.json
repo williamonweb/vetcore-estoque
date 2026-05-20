@@ -6,13 +6,11 @@
       "username": "admin",
       "password": "123456",
       "role": "admin",
-      "supplierId": null
+      "supplierId": null,
+      "active": true
     }
   ],
   "suppliers": [],
-  "products": [],
-  "stockMoves": [],
-  "quotes": [],
   "categories": [
     {
       "id": "cat_medicamentos",
@@ -46,5 +44,8 @@
       "id": "cat_outros",
       "name": "Outros"
     }
-  ]
+  ],
+  "products": [],
+  "stockMoves": [],
+  "quotes": []
 }
