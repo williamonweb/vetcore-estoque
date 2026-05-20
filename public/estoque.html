@@ -1,0 +1,81 @@
+
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>VetCore Estoque - Saída</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Estoque</h2>
+    <p class="muted" id="who">Saída de produtos</p>
+    <div class="nav">
+      <button class="active">Saída</button>
+    </div>
+    <br>
+    <button class="secondary" onclick="logout()">Sair</button>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1>Saída de produtos</h1>
+        <p class="muted">Use o leitor de código de barras/EAN ou pesquise o produto.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Leitura rápida</h3>
+      <div class="grid">
+        <input id="scanInput" placeholder="Bipe ou digite o código EAN" autofocus>
+        <button onclick="findByEAN()">Buscar código</button>
+        <button class="secondary" onclick="openProductSearch()">🔎 Pesquisar produto</button>
+      </div>
+      <p id="scanMsg" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <h3>Produto selecionado</h3>
+      <div id="selectedProductBox" class="muted">Nenhum produto selecionado.</div>
+      <div class="grid">
+        <input id="outQty" type="number" placeholder="Quantidade da saída" value="1">
+        <input id="outNote" placeholder="Observação / setor / motivo">
+      </div>
+      <button onclick="saveStockOut()">Confirmar saída</button>
+    </div>
+
+    <div class="card">
+      <h3>Últimas saídas</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Usuário</th>
+            <th>Observação</th>
+          </tr>
+        </thead>
+        <tbody id="stockOutTable"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="mt"></h3>
+      <button class="x" onclick="closeModal()">×</button>
+    </div>
+    <div id="mb"></div>
+  </div>
+</div>
+
+<script src="/ui.js"></script>
+<script src="/estoque.js"></script>
+</body>
+</html>

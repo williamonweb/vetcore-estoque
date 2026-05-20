@@ -61,6 +61,11 @@ function requireAdmin(req,res,next){
   next();
 }
 
+function requireStockOrAdmin(req,res,next){
+  if(!req.session.user || !["admin","estoque"].includes(req.session.user.role)) return res.status(403).json({error:"Acesso negado."});
+  next();
+}
+
 app.get("/", (req,res)=>res.sendFile(path.join(__dirname, "public", "login.html")));
 
 app.post("/api/login", (req,res)=>{
@@ -84,6 +89,15 @@ app.get("/api/state", requireLogin, (req,res)=>{
       .map(q=>({...q, suppliers:(q.suppliers||[]).filter(s=>s.supplierId===me.supplierId)}))
       .filter(q=>q.suppliers.length);
     return res.json({user:me,supplier,quotes});
+  }
+
+  if(me.role === "estoque"){
+    return res.json({
+      user: me,
+      products: db.products,
+      categories: db.categories,
+      stockMoves: db.stockMoves.filter(m=>m.type==="saida").slice(-200)
+    });
   }
 
   res.json({...db, users: db.users.map(safeUser)});
@@ -202,6 +216,33 @@ app.delete("/api/products/:id", requireAdmin, (req,res)=>{
   db.products = db.products.filter(p=>p.id!==req.params.id);
   writeDB(db);
   res.json({ok:true});
+});
+
+
+app.post("/api/stock-out", requireStockOrAdmin, (req,res)=>{
+  const db = readDB();
+  const {productId, quantity, note} = req.body;
+  const product = db.products.find(p=>p.id===productId);
+  if(!product) return res.status(404).json({error:"Produto não encontrado."});
+
+  const qty = Number(quantity||0);
+  if(qty<=0) return res.status(400).json({error:"Quantidade inválida."});
+  if(Number(product.stock||0) < qty) return res.status(400).json({error:"Estoque insuficiente."});
+
+  product.stock -= qty;
+  db.stockMoves.push({
+    id:uid("mov"),
+    productId,
+    type:"saida",
+    quantity:qty,
+    note:note||"",
+    userId:req.session.user.id,
+    userName:req.session.user.name,
+    date:new Date().toISOString()
+  });
+
+  writeDB(db);
+  res.json({ok:true,product});
 });
 
 app.post("/api/stock", requireAdmin, (req,res)=>{
