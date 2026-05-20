@@ -1,0 +1,26 @@
+
+<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VetCore Estoque</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div><h2>VetCore Estoque</h2><span class="muted">Administração</span></div><button class="secondary" onclick="logout()">Sair</button></header>
+<main>
+<div class="tabs">
+<button class="active" onclick="tab('dashboard',this)">Dashboard</button><button onclick="tab('fornecedores',this)">Fornecedores</button><button onclick="tab('produtos',this)">Produtos</button><button onclick="tab('movimentos',this)">Entrada/Saída</button><button onclick="tab('cotacoes',this)">Cotações</button><button onclick="tab('nfe',this)">XML NF-e</button>
+</div>
+
+<section id="dashboard" class="page"><div class="grid" id="cards"></div><div class="card"><h3>Produtos abaixo do mínimo</h3><table><thead><tr><th>Produto</th><th>Estoque</th><th>Mínimo</th><th>Comprar</th></tr></thead><tbody id="lowStock"></tbody></table></div></section>
+
+<section id="fornecedores" class="page hidden"><div class="card"><h3>Cadastrar fornecedor com login</h3><div class="grid"><input id="supName" placeholder="Nome"><input id="supPhone" placeholder="WhatsApp"><input id="supEmail" placeholder="E-mail"><input id="supUser" placeholder="Login do fornecedor"><input id="supPass" placeholder="Senha"></div><button onclick="saveSupplier()">Salvar fornecedor</button></div><div class="card"><h3>Fornecedores</h3><table><thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Login</th></tr></thead><tbody id="supTable"></tbody></table></div></section>
+
+<section id="produtos" class="page hidden"><div class="card"><h3>Cadastrar produto</h3><div class="grid"><input id="prodName" placeholder="Produto"><input id="prodCat" placeholder="Categoria"><select id="prodSupplier"></select><input id="prodStock" type="number" placeholder="Estoque inicial"><input id="prodMin" type="number" placeholder="Estoque mínimo"><input id="prodUnit" placeholder="Unidade" value="un"><input id="prodEan" placeholder="EAN"></div><button onclick="saveProduct()">Salvar produto</button></div><div class="card"><h3>Produtos</h3><table><thead><tr><th>Produto</th><th>Fornecedor padrão</th><th>Estoque</th><th>Mínimo</th></tr></thead><tbody id="prodTable"></tbody></table></div></section>
+
+<section id="movimentos" class="page hidden"><div class="card"><h3>Entrada / Saída</h3><div class="grid"><select id="moveProduct"></select><select id="moveType"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><input id="moveQty" type="number" placeholder="Quantidade"><input id="moveNote" placeholder="Observação"></div><button onclick="saveMove()">Lançar</button></div></section>
+
+<section id="cotacoes" class="page hidden"><div class="card"><h3>Nova cotação</h3><input id="quoteTitle" placeholder="Título da cotação"><p class="muted">Selecione produtos e fornecedores. Cada fornecedor verá somente a tela dele ao entrar com login e senha.</p><div class="grid"><div><h4>Produtos</h4><div id="quoteProducts"></div></div><div><h4>Fornecedores</h4><div id="quoteSuppliers"></div></div></div><button onclick="createQuote()">Criar cotação</button></div><div class="card"><h3>Cotações</h3><div id="quotesList"></div></div><div class="card"><h3>Resultado final</h3><div id="quoteResults"></div></div></section>
+
+<section id="nfe" class="page hidden"><div class="card"><h3>Importar XML da NF-e</h3><input type="file" id="xmlFile" accept=".xml"><button onclick="importNfe()">Importar e dar entrada</button><p id="nfeMsg" class="muted"></p></div></section>
+</main>
+
+<div id="modal" class="modal hidden"><div class="box"><button class="secondary" style="float:right" onclick="closeModal()">Fechar</button><div id="modalContent"></div></div></div>
+
+<script src="/admin.js"></script>
+</body></html>

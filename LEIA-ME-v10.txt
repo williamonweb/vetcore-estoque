@@ -1,0 +1,19 @@
+
+# VetCore Estoque e Cotação v10
+
+## Login inicial
+Usuário: admin  
+Senha: 123456
+
+## Novidade desta versão
+- Login com perfil admin e fornecedor.
+- Cadastro de fornecedor com login e senha individual.
+- Fornecedor vê somente as cotações enviadas para ele.
+- Fornecedor informa marca, valor, prazo, condição de pagamento e observação.
+- Admin vê menor preço por item e vencedor.
+- Mensagem WhatsApp agrupada por fornecedor vencedor.
+- Importação de XML NF-e para entrada automática no estoque.
+
+## Rodar localmente
+npm install
+npm start

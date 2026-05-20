@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": "u_admin",
+      "name": "Administrador",
+      "username": "admin",
+      "password": "123456",
+      "role": "admin",
+      "supplierId": null
+    }
+  ],
+  "suppliers": [],
+  "products": [],
+  "stockMoves": [],
+  "quotes": []
+}
