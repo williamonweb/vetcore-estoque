@@ -1,9 +1,18 @@
 const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 let db = JSON.parse(localStorage.getItem('vetcoreEstoqueCotacao')||'{"produtos":[],"movs":[],"cotacoes":{},"fornecedores":[]}');
 db.produtos = db.produtos || []; db.movs = db.movs || []; db.cotacoes = db.cotacoes || {}; db.fornecedores = db.fornecedores || [];
+let usuariosServidor = [];
 const save=()=>localStorage.setItem('vetcoreEstoqueCotacao',JSON.stringify(db));
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+async function apiJSON(url, opts={}){
+ const r=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok) throw new Error(j.erro||j.error||'Erro no servidor');
+ return j;
+}
+async function carregarUsuarios(){try{usuariosServidor=await apiJSON('/api/users'); renderUsuarios(); renderFornecedores(); renderUsuarioFornecedorSelect();}catch(e){console.warn(e.message)}}
+
 const need=p=>Math.max(0, Number(p.minimo||0)-Number(p.estoque||0));
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const chaveFornecedor=s=>String(s||'').trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -15,13 +24,15 @@ function init(){
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.page,b));
  $('produtoForm').onsubmit=salvarProduto; $('movForm').onsubmit=registrarMov;
  if($('fornecedorForm')) $('fornecedorForm').onsubmit=salvarFornecedor;
+ if($('usuarioForm')) $('usuarioForm').onsubmit=salvarUsuario;
  $('buscaProduto').oninput=render; $('importFile').onchange=importar;
  if($('buscaFornecedor')) $('buscaFornecedor').oninput=renderFornecedores;
+ if($('buscaUsuario')) $('buscaUsuario').oninput=renderUsuarios;
  if($('xmlNfeFile')) $('xmlNfeFile').onchange=importarXmlNFe;
  $('modalBusca').oninput=renderModalProdutos;
  $('fornecedorMsg').onchange=montarMensagemFornecedor;
  $('cotacaoRespostaFile').onchange=importarRespostaFornecedor;
- render();
+ render(); carregarUsuarios();
 }
 function show(page,btn){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(page).classList.add('active');document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));btn.classList.add('active');$('pageTitle').textContent=btn.textContent;render();}
 function salvarProduto(e){e.preventDefault();let id=$('produtoId').value||uid();let antigo=db.produtos.find(p=>p.id===id);let p={id,nome:$('nome').value.trim(),categoria:$('categoria').value.trim(),fornecedor:$('fornecedor').value.trim(),ean:$('ean').value.trim(),estoque:+$('estoque').value||0,minimo:+$('minimo').value||0,valor:+$('valor').value||0,unidade:$('unidade').value,obs:$('obs').value.trim()}; if(antigo) Object.assign(antigo,p); else db.produtos.push(p); save(); limparProduto(); render();}
@@ -45,17 +56,24 @@ function cotInfo(p){let c=db.cotacoes[p.id]||{};let arr=[{slot:'1',nome:c.f1||'F
 function melhor(c){let arr=[{nome:c.f1||'Fornecedor 1',v:+c.v1||0},{nome:c.f2||'Fornecedor 2',v:+c.v2||0},{nome:c.f3||'Fornecedor 3',v:+c.v3||0}].filter(x=>x.v>0); if(!arr.length)return '-'; arr.sort((a,b)=>a.v-b.v); return `${esc(arr[0].nome)} - ${BRL.format(arr[0].v)}`;}
 function comprasAtuais(){return db.produtos.filter(p=>need(p)>0);}
 
-function salvarFornecedor(e){
+async function salvarFornecedor(e){
  e.preventDefault();
  let id=$('fornecedorId').value||uid();
  let antigo=db.fornecedores.find(f=>f.id===id);
- let f={id,nome:$('fornNome').value.trim(),telefone:$('fornTelefone').value.trim(),contato:$('fornContato').value.trim(),email:$('fornEmail').value.trim(),cidade:$('fornCidade').value.trim(),obs:$('fornObs').value.trim()};
+ let f={id,nome:$('fornNome').value.trim(),telefone:$('fornTelefone').value.trim(),contato:$('fornContato').value.trim(),email:$('fornEmail').value.trim(),cidade:$('fornCidade').value.trim(),obs:$('fornObs').value.trim(),usuario:$('fornUsuario')?.value.trim()||''};
  if(!f.nome) return alert('Informe o nome do fornecedor.');
  if(antigo) Object.assign(antigo,f); else db.fornecedores.push(f);
- save(); limparFornecedor(); render();
+ save();
+ if($('fornUsuario')?.value.trim()){
+  try{
+   await apiJSON('/api/users',{method:'POST',body:JSON.stringify({nome:f.nome,usuario:$('fornUsuario').value.trim(),senha:$('fornSenha').value,role:'fornecedor',fornecedor:f.nome})});
+   await carregarUsuarios();
+  }catch(err){alert('Fornecedor salvo, mas não consegui criar o login: '+err.message);}
+ }
+ limparFornecedor(); render();
 }
-function limparFornecedor(){['fornecedorId','fornNome','fornTelefone','fornContato','fornEmail','fornCidade','fornObs'].forEach(id=>{if($(id))$(id).value=''});}
-function editarFornecedor(id){let f=db.fornecedores.find(x=>x.id===id); if(!f)return; $('fornecedorId').value=f.id; $('fornNome').value=f.nome||''; $('fornTelefone').value=f.telefone||''; $('fornContato').value=f.contato||''; $('fornEmail').value=f.email||''; $('fornCidade').value=f.cidade||''; $('fornObs').value=f.obs||''; document.querySelector('[data-page="fornecedores"]').click();}
+function limparFornecedor(){['fornecedorId','fornNome','fornTelefone','fornContato','fornEmail','fornCidade','fornObs','fornUsuario','fornSenha'].forEach(id=>{if($(id))$(id).value=''});}
+function editarFornecedor(id){let f=db.fornecedores.find(x=>x.id===id); if(!f)return; $('fornecedorId').value=f.id; $('fornNome').value=f.nome||''; $('fornTelefone').value=f.telefone||''; $('fornContato').value=f.contato||''; $('fornEmail').value=f.email||''; $('fornCidade').value=f.cidade||''; $('fornObs').value=f.obs||''; if($('fornUsuario')) $('fornUsuario').value=f.usuario||''; if($('fornSenha')) $('fornSenha').value=''; document.querySelector('[data-page="fornecedores"]').click();}
 function excluirFornecedor(id){let f=db.fornecedores.find(x=>x.id===id); if(!f)return; if(confirm('Excluir fornecedor '+f.nome+'?')){db.fornecedores=db.fornecedores.filter(x=>x.id!==id); save(); render();}}
 function renderFornecedorSelect(){
  let atual=$('fornecedor')?.value||'';
@@ -68,11 +86,37 @@ function renderFornecedores(){
  if(!$('fornecedoresTabela')) return;
  let q=($('buscaFornecedor')?.value||'').toLowerCase();
  let lista=(db.fornecedores||[]).filter(f=>[f.nome,f.telefone,f.contato,f.email,f.cidade].join(' ').toLowerCase().includes(q));
- $('fornecedoresTabela').innerHTML=lista.map(f=>`<tr><td><b>${esc(f.nome)}</b><br><small>${esc(f.cidade||'')} ${f.obs?'- '+esc(f.obs):''}</small></td><td>${esc(f.telefone||'-')}</td><td>${esc(f.contato||'-')}</td><td>${esc(f.email||'-')}</td><td><button class="mini" onclick="editarFornecedor('${f.id}')">Editar</button><button class="mini danger" onclick="excluirFornecedor('${f.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="5">Nenhum fornecedor cadastrado.</td></tr>';
+ $('fornecedoresTabela').innerHTML=lista.map(f=>{let u=usuariosServidor.find(u=>chaveFornecedor(u.fornecedor)===chaveFornecedor(f.nome)||u.usuario===f.usuario);let acesso=u?`<span class="tag ok">${esc(u.usuario)}</span>`:'<span class="tag low">sem login</span>';return `<tr><td><b>${esc(f.nome)}</b><br><small>${esc(f.cidade||'')} ${f.obs?'- '+esc(f.obs):''}</small></td><td>${esc(f.telefone||'-')}</td><td>${esc(f.contato||'-')}</td><td>${esc(f.email||'-')}</td><td>${acesso}</td><td><button class="mini" onclick="editarFornecedor('${f.id}')">Editar</button><button class="mini danger" onclick="excluirFornecedor('${f.id}')">Excluir</button></td></tr>`}).join('')||'<tr><td colspan="6">Nenhum fornecedor cadastrado.</td></tr>';
+}
+
+
+function renderUsuarioFornecedorSelect(){
+ if(!$('userFornecedor')) return;
+ let atual=$('userFornecedor').value||'';
+ $('userFornecedor').innerHTML='<option value="">Sem vínculo</option>'+db.fornecedores.map(f=>`<option value="${esc(f.nome)}">${esc(f.nome)}</option>`).join('');
+ $('userFornecedor').value=atual;
+}
+async function salvarUsuario(e){
+ e.preventDefault();
+ let payload={nome:$('userNome').value.trim(),usuario:$('userLogin').value.trim(),senha:$('userSenha').value,role:$('userRole').value,fornecedor:$('userFornecedor').value};
+ if(!payload.nome||!payload.usuario) return alert('Informe nome e login.');
+ if(!$('usuarioOriginal').value && !payload.senha) return alert('Informe uma senha para novo usuário.');
+ try{await apiJSON('/api/users',{method:'POST',body:JSON.stringify(payload)}); limparUsuario(); await carregarUsuarios(); alert('Usuário salvo.');}
+ catch(err){alert(err.message);}
+}
+function limparUsuario(){['usuarioOriginal','userNome','userLogin','userSenha'].forEach(id=>{if($(id))$(id).value=''}); if($('userRole')) $('userRole').value='admin'; if($('userFornecedor')) $('userFornecedor').value=''; if($('userLogin')) $('userLogin').disabled=false;}
+function editarUsuario(usuario){let u=usuariosServidor.find(x=>x.usuario===usuario); if(!u)return; $('usuarioOriginal').value=u.usuario; $('userNome').value=u.nome||''; $('userLogin').value=u.usuario; $('userLogin').disabled=true; $('userSenha').value=''; $('userRole').value=u.role||'admin'; renderUsuarioFornecedorSelect(); $('userFornecedor').value=u.fornecedor||''; document.querySelector('[data-page="usuarios"]').click();}
+async function excluirUsuario(usuario){if(usuario==='admin') return alert('O admin não pode ser excluído.'); if(!confirm('Excluir usuário '+usuario+'?')) return; try{await apiJSON('/api/users/'+encodeURIComponent(usuario),{method:'DELETE'}); await carregarUsuarios();}catch(err){alert(err.message);}}
+function renderUsuarios(){
+ if(!$('usuariosTabela')) return;
+ renderUsuarioFornecedorSelect();
+ let q=($('buscaUsuario')?.value||'').toLowerCase();
+ let lista=usuariosServidor.filter(u=>[u.nome,u.usuario,u.role,u.fornecedor].join(' ').toLowerCase().includes(q));
+ $('usuariosTabela').innerHTML=lista.map(u=>`<tr><td>${esc(u.nome||'')}</td><td><b>${esc(u.usuario)}</b></td><td>${u.role==='fornecedor'?'Fornecedor':'Admin'}</td><td>${esc(u.fornecedor||'-')}</td><td><button class="mini" onclick="editarUsuario('${esc(u.usuario)}')">Editar</button>${u.usuario==='admin'?'':`<button class="mini danger" onclick="excluirUsuario('${esc(u.usuario)}')">Excluir</button>`}</td></tr>`).join('')||'<tr><td colspan="5">Nenhum usuário cadastrado.</td></tr>';
 }
 
 function render(){
- renderFornecedorSelect(); renderFornecedores();
+ renderFornecedorSelect(); renderFornecedores(); renderUsuarios();
  let q=($('buscaProduto')?.value||'').toLowerCase(); let produtos=db.produtos.filter(p=>[p.nome,p.categoria,p.fornecedor,p.ean].join(' ').toLowerCase().includes(q));
  $('produtosTabela').innerHTML=produtos.map(p=>`<tr><td><b>${esc(p.nome)}</b><br><small>${esc(p.categoria||'')} ${p.ean?'- '+esc(p.ean):''}</small></td><td>${p.estoque} ${esc(p.unidade)}</td><td>${p.minimo} ${esc(p.unidade)}</td><td>${BRL.format(p.valor)}</td><td><span class="tag ${need(p)>0?'low':'ok'}">${need(p)>0?'Comprar':'OK'}</span></td><td><button class="mini" onclick="editarProduto('${p.id}')">Editar</button><button class="mini danger" onclick="excluirProduto('${p.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum produto cadastrado.</td></tr>';
  $('movTabela').innerHTML=db.movs.slice(0,100).map(m=>`<tr><td>${esc(m.data)}</td><td>${esc(m.nome)}</td><td>${m.tipo==='entrada'?'Entrada':'Saída'}</td><td>${m.qtd}</td><td>${esc(m.obs||'')}</td></tr>`).join('')||'<tr><td colspan="5">Sem movimentações.</td></tr>';

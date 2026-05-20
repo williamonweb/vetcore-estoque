@@ -1,0 +1,18 @@
+VetCore Estoque e Cotação v11
+
+Novidades:
+- Mantém o layout original.
+- Cadastro de fornecedor agora permite criar login e senha de fornecedor.
+- Nova tela Usuários para cadastrar admin ou fornecedor.
+- Fornecedores com login aparecem vinculados no cadastro.
+
+Login inicial:
+Usuário: admin
+Senha: 123456
+
+Como atualizar no Git:
+1. Copie os arquivos por cima da pasta atual do projeto.
+2. Rode:
+   git add .
+   git commit -m "v11 usuarios e fornecedores"
+   git push

@@ -12,6 +12,7 @@
     <button class="nav active" data-page="dashboard">Dashboard</button>
     <button class="nav" data-page="produtos">Produtos</button>
     <button class="nav" data-page="fornecedores">Fornecedores</button>
+    <button class="nav" data-page="usuarios">Usuários</button>
     <button class="nav" data-page="movimentacoes">Entrada / Saída</button>
     <button class="nav" data-page="compras">Lista de Compras</button>
     <button class="nav" data-page="cotacao">Planilha de Cotação</button>
@@ -55,9 +56,25 @@
         <label>E-mail<input id="fornEmail"></label>
         <label>Cidade<input id="fornCidade"></label>
         <label>Observação<input id="fornObs"></label>
+        <label>Login para cotação<input id="fornUsuario" placeholder="Ex: uniao"></label>
+        <label>Senha para cotação<input id="fornSenha" type="password" placeholder="Ex: 123456"></label>
         <div class="formActions"><button type="submit">Salvar fornecedor</button><button type="button" onclick="limparFornecedor()">Limpar</button></div>
       </form></div>
-      <div class="panel"><div class="row"><h3>Fornecedores cadastrados</h3><input id="buscaFornecedor" placeholder="Buscar fornecedor..."></div><div class="tableWrap"><table><thead><tr><th>Fornecedor</th><th>WhatsApp</th><th>Contato</th><th>E-mail</th><th>Ações</th></tr></thead><tbody id="fornecedoresTabela"></tbody></table></div></div>
+      <div class="panel"><div class="row"><h3>Fornecedores cadastrados</h3><input id="buscaFornecedor" placeholder="Buscar fornecedor..."></div><div class="tableWrap"><table><thead><tr><th>Fornecedor</th><th>WhatsApp</th><th>Contato</th><th>E-mail</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="fornecedoresTabela"></tbody></table></div></div>
+    </section>
+
+
+    <section id="usuarios" class="page">
+      <div class="panel"><h3>Cadastro de Usuários</h3><p class="hint">Use esta tela para criar acessos internos ou acessos de fornecedores para cotação.</p><form id="usuarioForm" class="grid">
+        <input type="hidden" id="usuarioOriginal">
+        <label>Nome<input id="userNome" required></label>
+        <label>Login<input id="userLogin" required placeholder="ex: compras01"></label>
+        <label>Senha<input id="userSenha" type="password" placeholder="deixe em branco para não alterar"></label>
+        <label>Perfil<select id="userRole"><option value="admin">Admin</option><option value="fornecedor">Fornecedor</option></select></label>
+        <label>Fornecedor vinculado<select id="userFornecedor"><option value="">Sem vínculo</option></select></label>
+        <div class="formActions"><button type="submit">Salvar usuário</button><button type="button" onclick="limparUsuario()">Limpar</button></div>
+      </form></div>
+      <div class="panel"><div class="row"><h3>Usuários cadastrados</h3><input id="buscaUsuario" placeholder="Buscar usuário..."></div><div class="tableWrap"><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Fornecedor</th><th>Ações</th></tr></thead><tbody id="usuariosTabela"></tbody></table></div></div>
     </section>
 
     <section id="movimentacoes" class="page">
