@@ -1,0 +1,16 @@
+VetCore Estoque e Cotação
+
+Abra index.html no Chrome para usar o sistema interno.
+
+Fluxo fornecedor offline:
+1. No sistema, vá em Planilha de Cotação e clique em Gerar arquivo p/ fornecedor.
+2. Envie para o fornecedor o arquivo gerado + o arquivo fornecedor.html.
+3. O fornecedor abre fornecedor.html, importa a cotação, preenche valores/prazo/entrega e gera a resposta.
+4. Você importa a resposta no botão Importar resposta.
+5. O sistema calcula o menor valor e agrupa os vencedores por fornecedor.
+
+Versão v8:
+- Adicionado cadastro de fornecedores.
+- No cadastro de produtos, o fornecedor padrão agora é selecionado em uma lista.
+- Adicionado importador de XML de NF-e para entrada automática no estoque.
+- Ao importar XML, produtos novos são cadastrados automaticamente e produtos existentes recebem entrada de estoque.

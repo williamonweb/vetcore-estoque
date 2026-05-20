@@ -1,0 +1,31 @@
+VETCORE ESTOQUE E COTAÇÃO v9 - COM LOGIN
+
+Como rodar no computador:
+1. Instale o Node.js 18 ou superior.
+2. Abra o terminal dentro desta pasta.
+3. Rode: npm install
+4. Rode: npm start
+5. Acesse: http://localhost:3000
+
+Login inicial:
+Usuário: admin
+Senha: 123456
+
+IMPORTANTE:
+Troque a senha antes de colocar online.
+O sistema cria o arquivo users.json automaticamente no primeiro start.
+
+Como trocar a senha:
+1. Gere um hash bcrypt para a nova senha.
+2. Substitua o campo senhaHash dentro de users.json.
+
+Observação importante:
+Esta versão adiciona login/senha e protege o acesso online.
+A lógica anterior do estoque/cotação foi mantida.
+Os dados do estoque ainda são salvos no navegador via localStorage, como na versão anterior.
+Na próxima versão podemos migrar o estoque para banco SQLite/PostgreSQL para todos os computadores acessarem a mesma base online.
+
+Para publicar online:
+- Pode subir em Render, Railway, VPS ou servidor da clínica.
+- Configure SESSION_SECRET no ambiente.
+- Use HTTPS quando estiver público.
