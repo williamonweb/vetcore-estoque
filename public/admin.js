@@ -341,8 +341,8 @@ function selectProductForMove(id) {
 }
 
 function openNewQuoteModal() {
-  const productChecks = state.products.map(p => `<label><input type="checkbox" name="modalQProd" value="${p.id}"> ${p.name} <span class="muted">(${p.stock}/${p.minStock})</span></label>`).join("") || '<p class="muted">Cadastre produtos primeiro.</p>';
-  const supplierChecks = state.suppliers.map(s => `<label><input type="checkbox" name="modalQSup" value="${s.id}"> ${s.name}</label>`).join("") || '<p class="muted">Cadastre fornecedores primeiro.</p>';
+  const productChecks = state.products.map(p => `<label class="check-row"><input type="checkbox" name="modalQProd" value="${p.id}"><span><b>${p.name}</b> <span class="muted">(${p.stock}/${p.minStock})</span></span></label>`).join("") || '<p class="muted">Cadastre produtos primeiro.</p>';
+  const supplierChecks = state.suppliers.map(s => `<label class="check-row"><input type="checkbox" name="modalQSup" value="${s.id}"><span>${s.name}</span></label>`).join("") || '<p class="muted">Cadastre fornecedores primeiro.</p>';
   openModal("Nova cotação", `<input id="modalQuoteTitle" placeholder="Título da cotação"><div class="grid"><div><h3>Produtos</h3><div class="checks">${productChecks}</div></div><div><h3>Fornecedores</h3><div class="checks">${supplierChecks}</div></div></div><button onclick="createQuoteFromModal()">Criar cotação</button>`);
 }
 
