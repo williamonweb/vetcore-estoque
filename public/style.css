@@ -315,3 +315,5 @@ tbody tr:hover td{background:rgba(255,255,255,.025)}
   .main{padding:18px}
   .top h1{font-size:30px}
 }
+
+.table-wrap{width:100%;overflow:auto;border-radius:16px}

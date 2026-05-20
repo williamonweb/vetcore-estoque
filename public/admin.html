@@ -10,7 +10,35 @@
 <section id="fornecedores" class="sec hidden"><div class="card"><h3>Cadastrar fornecedor com login</h3><div class="grid"><input id="supName" placeholder="Nome do fornecedor"><input id="supPhone" placeholder="WhatsApp"><input id="supEmail" placeholder="E-mail"><input id="supUser" placeholder="Login de acesso"><input id="supPass" placeholder="Senha de acesso"></div><button onclick="saveSupplier()">Salvar fornecedor</button></div><div class="card"><h3>Fornecedores</h3><table><thead><tr><th>Nome</th><th>Whats</th><th>E-mail</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="supTable"></tbody></table></div></section>
 <section id="usuarios" class="sec hidden"><div class="card"><h3>Cadastrar usuário</h3><div class="grid"><input id="userName" placeholder="Nome"><input id="userLogin" placeholder="Login"><input id="userPass" placeholder="Senha"><select id="userRole"><option value="admin">Admin</option><option value="fornecedor">Fornecedor</option></select><select id="userSupplier"></select></div><button onclick="saveUser()">Salvar usuário</button></div><div class="card"><h3>Usuários</h3><table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Fornecedor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="userTable"></tbody></table></div></section>
 <section id="produtos" class="sec hidden"><div class="card"><h3>Cadastrar produto</h3><div class="grid"><input id="prodName" placeholder="Produto"><input id="prodCat" placeholder="Categoria"><select id="prodSupplier"></select><input id="prodStock" type="number" placeholder="Estoque inicial"><input id="prodMin" type="number" placeholder="Estoque mínimo"><input id="prodUnit" value="un" placeholder="Unidade"><input id="prodEan" placeholder="EAN"></div><button onclick="saveProduct()">Salvar produto</button></div><div class="card"><h3>Produtos</h3><table><thead><tr><th>Produto</th><th>Fornecedor padrão</th><th>Estoque</th><th>Mínimo</th><th>Ações</th></tr></thead><tbody id="prodTable"></tbody></table></div></section>
-<section id="movimentos" class="sec hidden"><div class="card"><h3>Entrada / Saída</h3><div class="grid"><select id="moveProduct"></select><button class="secondary" onclick="openProductSearch()">🔎 Localizar produto</button><select id="moveType"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><input id="moveQty" type="number" placeholder="Quantidade"><input id="moveNote" placeholder="Observação"></div><button onclick="saveMove()">Lançar</button></div></section>
+<section id="movimentos" class="sec hidden">
+  <div class="card">
+    <h3>Entrada / Saída</h3>
+    <div class="grid">
+      <select id="moveProduct"></select>
+      <button class="secondary" onclick="openProductSearch()">🔎 Localizar produto</button>
+      <select id="moveType"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+      <input id="moveQty" type="number" placeholder="Quantidade">
+      <input id="moveNote" placeholder="Observação">
+    </div>
+    <button onclick="saveMove()">Lançar</button>
+  </div>
+
+  <div class="card">
+    <h3>Registro de entradas e saídas</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Produto</th>
+          <th>Tipo</th>
+          <th>Quantidade</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="stockMovesTable"></tbody>
+    </table>
+  </div>
+</section>
 <section id="cotacoes" class="sec hidden"><div class="card"><h3>Nova cotação online</h3><input id="quoteTitle" placeholder="Título da cotação"><div class="grid"><div><h3>Produtos</h3><div id="quoteProducts" class="checks"></div></div><div><h3>Fornecedores</h3><div id="quoteSuppliers" class="checks"></div></div></div><button onclick="createQuote()">Criar cotação</button><p class="muted">O fornecedor acessa com login e senha e vê automaticamente as cotações dele. Não precisa importar arquivo.</p></div><div class="card"><h3>Cotações abertas</h3><div id="quotesList"></div></div><div class="card"><h3>Resultado final</h3><div id="quoteResults"></div></div></section>
 <section id="nfe" class="sec hidden"><div class="card"><h3>Importar XML da NF-e</h3><input type="file" id="xmlFile" accept=".xml"><button onclick="importNfe()">Importar e dar entrada</button><p id="nfeMsg" class="muted"></p></div></section>
 </main></div>

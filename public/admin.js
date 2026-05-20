@@ -4,7 +4,7 @@ async function api(url,opts={}){const o={...opts};if(o.body && !(o.body instance
 async function load(){state=await api('/api/state');renderAll()}
 function showPage(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');title.textContent=btn.textContent}
 function supplierName(id){return state.suppliers.find(s=>s.id===id)?.name||'-'}
-function renderAll(){renderDashboard();renderSuppliers();renderUsers();renderProducts();renderMoves();renderQuoteOptions();renderQuotes();renderResults()}
+function renderAll(){renderDashboard();renderSuppliers();renderUsers();renderProducts();renderMoves();renderStockMoves();renderQuoteOptions();renderQuotes();renderResults()}
 function renderDashboard(){cards.innerHTML=`<div class="card"><h2>${state.products.length}</h2><p>Produtos</p></div><div class="card"><h2>${state.suppliers.length}</h2><p>Fornecedores</p></div><div class="card"><h2>${state.quotes.length}</h2><p>Cotações</p></div>`;lowStock.innerHTML=state.products.filter(p=>Number(p.stock)<=Number(p.minStock)).map(p=>`<tr><td>${p.name}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td>${Math.max(0,p.minStock-p.stock)} ${p.unit}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Nenhum produto abaixo do mínimo.</td></tr>'}
 function renderSuppliers(){supTable.innerHTML=state.suppliers.map(s=>{let u=state.users.find(u=>u.supplierId===s.id);return `<tr><td>${s.name}</td><td>${s.phone||''}</td><td>${s.email||''}</td><td>${u?u.username:'<span class="warn">sem login</span>'}</td><td><button class="danger" onclick="delSupplier('${s.id}')">Excluir</button></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">Nenhum fornecedor.</td></tr>'}
 function renderUsers(){
@@ -30,8 +30,87 @@ async function saveProduct(){try{await api('/api/products',{method:'POST',body:J
 async function saveMove(){try{await api('/api/stock',{method:'POST',body:JSON.stringify({productId:moveProduct.value,type:moveType.value,quantity:moveQty.value,note:moveNote.value})});moveQty.value=moveNote.value='';toast('Movimento lançado');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
 async function createQuote(){try{let productIds=[...document.querySelectorAll('[name=qprod]:checked')].map(x=>x.value);let supplierIds=[...document.querySelectorAll('[name=qsup]:checked')].map(x=>x.value);await api('/api/quotes',{method:'POST',body:JSON.stringify({title:quoteTitle.value,productIds,supplierIds})});quoteTitle.value='';toast('Cotação criada');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
 async function importNfe(){try{let fd=new FormData();fd.append('xml',xmlFile.files[0]);let r=await fetch('/api/import-nfe',{method:'POST',body:fd});let j=await r.json();if(!r.ok)throw new Error(j.error);nfeMsg.textContent=`Importados ${j.imported} itens.`;await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-function openProductSearch(){let html=`<input id="searchProd" placeholder="Digite para buscar produto" oninput="filterProd()"><div id="searchList"></div>`;openModal('Localizar produto',html);filterProd()}
-function filterProd(){let q=(document.getElementById('searchProd')?.value||'').toLowerCase();let list=state.products.filter(p=>p.name.toLowerCase().includes(q)).map(p=>`<p><button class="secondary" onclick="moveProduct.value='${p.id}';closeModal()">${p.name} — estoque ${p.stock}</button></p>`).join('');document.getElementById('searchList').innerHTML=list||'<p class="muted">Nada encontrado.</p>'}
+
+
+
+
+
+function productById(id){
+  return state.products.find(p=>p.id===id);
+}
+
+function openProductSearch(){
+  openModal('Localizar produto', `
+    <input id="modalProductSearch" placeholder="Buscar por nome, categoria ou EAN" oninput="renderModalProductList()">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>EAN</th>
+            <th>Estoque</th>
+            <th>Mínimo</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="modalProductList"></tbody>
+      </table>
+    </div>
+  `);
+  renderModalProductList();
+}
+
+function renderModalProductList(){
+  const el = document.getElementById('modalProductList');
+  if(!el) return;
+
+  const term = (document.getElementById('modalProductSearch')?.value || '').toLowerCase().trim();
+  const filtered = state.products.filter(p => {
+    const text = `${p.name||''} ${p.category||''} ${p.ean||''}`.toLowerCase();
+    return text.includes(term);
+  });
+
+  el.innerHTML = filtered.map(p => `
+    <tr>
+      <td><b>${p.name}</b></td>
+      <td>${p.category || '-'}</td>
+      <td>${p.ean || '-'}</td>
+      <td>${p.stock} ${p.unit || 'un'}</td>
+      <td>${p.minStock || 0}</td>
+      <td><button class="secondary" onclick="selectProductForMove('${p.id}')">Selecionar</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="muted">Nenhum produto encontrado.</td></tr>';
+}
+
+function selectProductForMove(id){
+  moveProduct.value = id;
+  const p = productById(id);
+  closeModal();
+  toast(`Produto selecionado: ${p ? p.name : ''}`);
+  moveQty?.focus();
+}
+
+function renderStockMoves(){
+  if(!document.getElementById('stockMovesTable')) return;
+
+  const moves = [...(state.stockMoves || [])].reverse();
+  stockMovesTable.innerHTML = moves.map(m => {
+    const p = productById(m.productId);
+    const typeClass = m.type === 'entrada' ? 'ok' : 'bad';
+    const signal = m.type === 'entrada' ? '+' : '-';
+    return `
+      <tr>
+        <td>${m.date ? new Date(m.date).toLocaleString('pt-BR') : '-'}</td>
+        <td>${p ? p.name : '-'}</td>
+        <td><span class="${typeClass}">${m.type}</span></td>
+        <td>${signal}${m.quantity}</td>
+        <td>${m.note || '-'}</td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="5" class="muted">Nenhum lançamento registrado.</td></tr>';
+}
+
 function delSupplier(id){confirmModal('Excluir fornecedor','Deseja excluir este fornecedor e o acesso dele?',async()=>{await api('/api/suppliers/'+id,{method:'DELETE'});await load();toast('Excluído')})}
 function delUser(id){confirmModal('Excluir usuário','Deseja excluir este usuário?',async()=>{await api('/api/users/'+id,{method:'DELETE'});await load();toast('Excluído')})}
 function delProduct(id){confirmModal('Excluir produto','Deseja excluir este produto?',async()=>{await api('/api/products/'+id,{method:'DELETE'});await load();toast('Excluído')})}

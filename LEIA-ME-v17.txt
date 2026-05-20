@@ -1,0 +1,14 @@
+VetCore Estoque v17
+
+Alterações:
+- Em Entrada/Saída, Localizar Produto continua em modal.
+- Dentro do modal agora aparece uma tabela/lista completa dos produtos.
+- Ao selecionar, o modal fecha e preenche o produto no lançamento.
+- Abaixo das caixas de entrada/saída foi adicionado o registro dos lançamentos.
+- Registro mostra data, produto, tipo, quantidade e observação.
+
+Mantido:
+- Layout premium.
+- Usuários editáveis.
+- Login admin/fornecedor.
+- Cotações online.
