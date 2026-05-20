@@ -24,7 +24,7 @@ function uid(prefix){ return prefix+"_"+Date.now().toString(36)+"_"+Math.random(
 function readDB(){
   if(!fs.existsSync(DB_PATH)){
     fs.mkdirSync(path.dirname(DB_PATH), {recursive:true});
-    fs.writeFileSync(DB_PATH, JSON.stringify({users:[],suppliers:[],products:[],stockMoves:[],quotes:[]}, null, 2));
+    fs.writeFileSync(DB_PATH, JSON.stringify({users:[],suppliers:[],products:[],stockMoves:[],quotes:[],categories:[]}, null, 2));
   }
   return JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
 }
@@ -122,11 +122,36 @@ app.delete("/api/suppliers/:id", requireAdmin, (req,res)=>{
   writeDB(db); res.json({ok:true});
 });
 
+
+app.post("/api/categories", requireAdmin, (req,res)=>{
+  const db = readDB();
+  if(!db.categories) db.categories = [];
+  const name = (req.body.name || "").trim();
+  if(!name) return res.status(400).json({error:"Nome da categoria é obrigatório."});
+  if(db.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){
+    return res.status(400).json({error:"Categoria já cadastrada."});
+  }
+  const category = {id:uid("cat"), name};
+  db.categories.push(category);
+  writeDB(db);
+  res.json({ok:true, category});
+});
+
+app.delete("/api/categories/:id", requireAdmin, (req,res)=>{
+  const db = readDB();
+  if(!db.categories) db.categories = [];
+  const inUse = (db.products || []).some(p=>p.categoryId===req.params.id || p.category===req.params.id);
+  if(inUse) return res.status(400).json({error:"Categoria em uso por produtos. Altere os produtos antes de excluir."});
+  db.categories = db.categories.filter(c=>c.id!==req.params.id);
+  writeDB(db);
+  res.json({ok:true});
+});
+
 app.post("/api/products", requireAdmin, (req,res)=>{
   const db = readDB();
-  const {name,category,supplierId,stock,minStock,unit,ean} = req.body;
+  const {name,category,categoryId,supplierId,stock,minStock,unit,ean} = req.body;
   if(!name) return res.status(400).json({error:"Nome do produto é obrigatório."});
-  const product = {id:uid("prod"),name,category:category||"",supplierId:supplierId||"",stock:Number(stock||0),minStock:Number(minStock||0),unit:unit||"un",ean:ean||""};
+  const product = {id:uid("prod"),name,categoryId:categoryId||"",category:category||"",supplierId:supplierId||"",stock:Number(stock||0),minStock:Number(minStock||0),unit:unit||"un",ean:ean||""};
   db.products.push(product); writeDB(db); res.json({ok:true,product});
 });
 app.delete("/api/products/:id", requireAdmin, (req,res)=>{
@@ -189,7 +214,7 @@ app.post("/api/import-nfe", requireAdmin, upload.single("xml"), (req,res)=>{
     const qty = Number((det.match(/<qCom>(.*?)<\/qCom>/)?.[1]||"0").replace(",","."));
     if(!name || !qty) return;
     let product = db.products.find(p=>(ean && p.ean===ean) || p.name.toLowerCase()===name.toLowerCase());
-    if(!product){ product = {id:uid("prod"),name,category:"Importado NF-e",supplierId:"",stock:0,minStock:0,unit:"un",ean}; db.products.push(product); }
+    if(!product){ product = {id:uid("prod"),name,category:"Importado NF-e",categoryId:"",supplierId:"",stock:0,minStock:0,unit:"un",ean}; db.products.push(product); }
     product.stock += qty;
     db.stockMoves.push({id:uid("mov"),productId:product.id,type:"entrada",quantity:qty,note:"Entrada via XML NF-e",date:new Date().toISOString()});
     imported++;

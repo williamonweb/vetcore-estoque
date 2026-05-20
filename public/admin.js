@@ -4,7 +4,8 @@ async function api(url,opts={}){const o={...opts};if(o.body && !(o.body instance
 async function load(){state=await api('/api/state');renderAll()}
 function showPage(id,btn){document.querySelectorAll('.sec').forEach(s=>s.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');title.textContent=btn.textContent}
 function supplierName(id){return state.suppliers.find(s=>s.id===id)?.name||'-'}
-function renderAll(){renderDashboard();renderSuppliers();renderUsers();renderProducts();renderMoves();renderStockMoves();renderQuoteOptions();renderQuotes();renderResults()}
+function categoryName(idOrText){return state.categories?.find(c=>c.id===idOrText)?.name || idOrText || '-'}
+function renderAll(){renderDashboard();renderSuppliers();renderUsers();renderCategories();renderProducts();renderMoves();renderStockMoves();renderQuoteOptions();renderQuotes();renderQuoteSheet();renderResults()}
 function renderDashboard(){cards.innerHTML=`<div class="card"><h2>${state.products.length}</h2><p>Produtos</p></div><div class="card"><h2>${state.suppliers.length}</h2><p>Fornecedores</p></div><div class="card"><h2>${state.quotes.length}</h2><p>Cotações</p></div>`;lowStock.innerHTML=state.products.filter(p=>Number(p.stock)<=Number(p.minStock)).map(p=>`<tr><td>${p.name}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td>${Math.max(0,p.minStock-p.stock)} ${p.unit}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Nenhum produto abaixo do mínimo.</td></tr>'}
 function renderSuppliers(){supTable.innerHTML=state.suppliers.map(s=>{let u=state.users.find(u=>u.supplierId===s.id);return `<tr><td>${s.name}</td><td>${s.phone||''}</td><td>${s.email||''}</td><td>${u?u.username:'<span class="warn">sem login</span>'}</td><td><button class="danger" onclick="delSupplier('${s.id}')">Excluir</button></td></tr>`}).join('')||'<tr><td colspan="5" class="muted">Nenhum fornecedor.</td></tr>'}
 function renderUsers(){
@@ -17,26 +18,55 @@ function renderUsers(){
     return `<tr><td>${u.name}</td><td>${u.username}</td><td>${u.role}</td><td>${supplierName(u.supplierId)}</td><td>${status}</td><td>${actions}</td></tr>`;
   }).join('');
 }
-function renderProducts(){prodSupplier.innerHTML='<option value="">Fornecedor padrão</option>'+state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');prodTable.innerHTML=state.products.map(p=>`<tr><td>${p.name}</td><td>${supplierName(p.supplierId)}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td><button class="danger" onclick="delProduct('${p.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">Nenhum produto.</td></tr>'}
-function renderMoves(){moveProduct.innerHTML=state.products.map(p=>`<option value="${p.id}">${p.name} — estoque ${p.stock}</option>`).join('')}
-function renderQuoteOptions(){quoteProducts.innerHTML=state.products.map(p=>`<label><input type="checkbox" name="qprod" value="${p.id}"> ${p.name} <span class="muted">(${p.stock}/${p.minStock})</span></label>`).join('')||'<p class="muted">Cadastre produtos.</p>';quoteSuppliers.innerHTML=state.suppliers.map(s=>`<label><input type="checkbox" name="qsup" value="${s.id}"> ${s.name}</label>`).join('')||'<p class="muted">Cadastre fornecedores.</p>'}
-function renderQuotes(){quotesList.innerHTML=state.quotes.map(q=>`<div class="card"><h3>${q.title}</h3><p class="muted">${new Date(q.createdAt).toLocaleString('pt-BR')}</p><table><thead><tr><th>Fornecedor</th><th>Status</th><th>Respondido em</th></tr></thead><tbody>${q.suppliers.map(s=>`<tr><td>${supplierName(s.supplierId)}</td><td>${s.status}</td><td>${s.respondedAt?new Date(s.respondedAt).toLocaleString('pt-BR'):'-'}</td></tr>`).join('')}</tbody></table><button class="danger" onclick="delQuote('${q.id}')">Excluir cotação</button></div>`).join('')||'<p class="muted">Nenhuma cotação.</p>'}
-function compute(q){return q.items.map(item=>{let offers=[];q.suppliers.forEach(s=>{let a=(s.answers||[]).find(x=>x.productId===item.productId);if(a&&Number(a.unitPrice)>0)offers.push({...a,supplierId:s.supplierId,total:Number(a.unitPrice)*Number(item.quantity)})});offers.sort((a,b)=>a.unitPrice-b.unitPrice);return {item,winner:offers[0]||null,offers}})}
-function renderResults(){quoteResults.innerHTML=state.quotes.map(q=>{let rows=compute(q);let grouped={};rows.forEach(w=>{if(w.winner){grouped[w.winner.supplierId]=grouped[w.winner.supplierId]||[];grouped[w.winner.supplierId].push(w)}});return `<div class="card"><h3>${q.title}</h3><table><thead><tr><th>Produto</th><th>Vencedor</th><th>Marca</th><th>Valor</th><th>Prazo</th></tr></thead><tbody>${rows.map(w=>`<tr><td>${w.item.name} — ${w.item.quantity} ${w.item.unit}</td><td>${w.winner?supplierName(w.winner.supplierId):'<span class="warn">Sem resposta</span>'}</td><td>${w.winner?.brand||''}</td><td>${w.winner?'R$ '+Number(w.winner.unitPrice).toFixed(2):''}</td><td>${w.winner?.deliveryTime||''}</td></tr>`).join('')}</tbody></table><h3>WhatsApp agrupado por fornecedor vencedor</h3>${Object.keys(grouped).map(sid=>`<p><b>${supplierName(sid)}</b> — ${grouped[sid].length} item(ns) <button onclick="showWhats('${q.id}','${sid}')">Mensagem WhatsApp</button></p>`).join('')||'<p class="muted">Aguardando respostas.</p>'}</div>`}).join('')}
-function showWhats(qid,sid){let q=state.quotes.find(x=>x.id===qid);let wins=compute(q).filter(w=>w.winner?.supplierId===sid);let msg=`Olá! Segue fechamento da cotação ${q.title}:\n\n`+wins.map(w=>`• ${w.item.name} — ${w.item.quantity} ${w.item.unit}\nMarca: ${w.winner.brand||'-'}\nValor unitário: R$ ${Number(w.winner.unitPrice).toFixed(2)}\nPrazo: ${w.winner.deliveryTime||'-'}`).join('\n\n')+`\n\nObrigado!`;openModal('Mensagem para '+supplierName(sid),`<textarea rows="13" id="wmsg">${msg}</textarea><button onclick="navigator.clipboard.writeText(wmsg.value);toast('Mensagem copiada')">Copiar mensagem</button>`)}
-async function saveSupplier(){try{await api('/api/suppliers',{method:'POST',body:JSON.stringify({name:supName.value,phone:supPhone.value,email:supEmail.value,username:supUser.value,password:supPass.value})});['supName','supPhone','supEmail','supUser','supPass'].forEach(id=>document.getElementById(id).value='');toast('Fornecedor salvo');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-async function saveUser(){try{await api('/api/users',{method:'POST',body:JSON.stringify({name:userName.value,username:userLogin.value,password:userPass.value,role:userRole.value,supplierId:userSupplier.value})});['userName','userLogin','userPass'].forEach(id=>document.getElementById(id).value='');toast('Usuário salvo');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-async function saveProduct(){try{await api('/api/products',{method:'POST',body:JSON.stringify({name:prodName.value,category:prodCat.value,supplierId:prodSupplier.value,stock:prodStock.value,minStock:prodMin.value,unit:prodUnit.value,ean:prodEan.value})});['prodName','prodCat','prodStock','prodMin','prodEan'].forEach(id=>document.getElementById(id).value='');toast('Produto salvo');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-async function saveMove(){try{await api('/api/stock',{method:'POST',body:JSON.stringify({productId:moveProduct.value,type:moveType.value,quantity:moveQty.value,note:moveNote.value})});moveQty.value=moveNote.value='';toast('Movimento lançado');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-async function createQuote(){try{let productIds=[...document.querySelectorAll('[name=qprod]:checked')].map(x=>x.value);let supplierIds=[...document.querySelectorAll('[name=qsup]:checked')].map(x=>x.value);await api('/api/quotes',{method:'POST',body:JSON.stringify({title:quoteTitle.value,productIds,supplierIds})});quoteTitle.value='';toast('Cotação criada');await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
-async function importNfe(){try{let fd=new FormData();fd.append('xml',xmlFile.files[0]);let r=await fetch('/api/import-nfe',{method:'POST',body:fd});let j=await r.json();if(!r.ok)throw new Error(j.error);nfeMsg.textContent=`Importados ${j.imported} itens.`;await load()}catch(e){openModal('Erro',`<p>${e.message}</p>`)}}
+function renderCategories(){
+  if(!document.getElementById('catTable')) return;
+  catTable.innerHTML = (state.categories||[]).map(c=>`
+    <tr>
+      <td>${c.name}</td>
+      <td><button class="danger" onclick="delCategory('${c.id}')">Excluir</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="2" class="muted">Nenhuma categoria cadastrada.</td></tr>';
+}
 
+async function saveCategory(){
+  try{
+    await api('/api/categories',{method:'POST',body:JSON.stringify({name:catName.value})});
+    catName.value='';
+    toast('Categoria salva');
+    await load();
+  }catch(e){openModal('Erro',`<p>${e.message}</p>`)}
+}
 
+function openNewCategoryModal(){
+  openModal('Nova categoria', `
+    <input id="modalCatName" placeholder="Nome da categoria">
+    <button onclick="saveCategoryFromModal()">Salvar categoria</button>
+  `);
+}
 
+async function saveCategoryFromModal(){
+  try{
+    await api('/api/categories',{method:'POST',body:JSON.stringify({name:modalCatName.value})});
+    closeModal();
+    toast('Categoria salva');
+    await load();
+  }catch(e){openModal('Erro',`<p>${e.message}</p>`)}
+}
 
+function delCategory(id){
+  confirmModal('Excluir categoria','Deseja excluir esta categoria?',async()=>{
+    try{
+      await api('/api/categories/'+id,{method:'DELETE'});
+      await load();
+      toast('Categoria excluída');
+    }catch(e){openModal('Erro',`<p>${e.message}</p>`)}
+  });
+}
 
-function productById(id){
-  return state.products.find(p=>p.id===id);
+function renderProducts(){
+  prodSupplier.innerHTML='<option value="">Fornecedor padrão</option>'+state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  prodCat.innerHTML='<option value="">Selecione a categoria</option>'+(state.categories||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  prodTable.innerHTML=state.products.map(p=>`<tr><td>${p.name}</td><td>${categoryName(p.categoryId || p.category)}</td><td>${supplierName(p.supplierId)}</td><td>${p.stock} ${p.unit}</td><td>${p.minStock}</td><td><button class="danger" onclick="delProduct('${p.id}')">Excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">Nenhum produto.</td></tr>';
 }
 
 function openProductSearch(){
@@ -67,14 +97,14 @@ function renderModalProductList(){
 
   const term = (document.getElementById('modalProductSearch')?.value || '').toLowerCase().trim();
   const filtered = state.products.filter(p => {
-    const text = `${p.name||''} ${p.category||''} ${p.ean||''}`.toLowerCase();
+    const text = `${p.name||''} ${categoryName(p.categoryId || p.category)||''} ${p.ean||''}`.toLowerCase();
     return text.includes(term);
   });
 
   el.innerHTML = filtered.map(p => `
     <tr>
       <td><b>${p.name}</b></td>
-      <td>${p.category || '-'}</td>
+      <td>${categoryName(p.categoryId || p.category)}</td>
       <td>${p.ean || '-'}</td>
       <td>${p.stock} ${p.unit || 'un'}</td>
       <td>${p.minStock || 0}</td>

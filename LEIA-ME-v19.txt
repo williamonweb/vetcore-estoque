@@ -1,0 +1,9 @@
+VetCore Estoque v19
+
+Alterações:
+- Tela de Cotações refeita no estilo da v9.
+- Visual compacto em formato de planilha.
+- Fornecedores lado a lado em linhas compactas.
+- Resumo de vencedores agrupado por fornecedor.
+- Botões WhatsApp e PDF por fornecedor vencedor.
+- Mantido backend online, login de fornecedor e demais funções da v18.
